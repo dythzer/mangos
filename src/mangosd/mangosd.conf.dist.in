@@ -53,20 +53,7 @@ WorldServerPort = 8085
 BindIP = "0.0.0.0"
 
 ###################################################################################################################
-# CUSTOM OPTIONS - Improved Config - http://www.manground.org/forum/
-#
-#	PlayerStart.Gold
-#		Amount of gold that new players will start with.
-#		If you want to start with silver, use for example 0.1 (for 10s)
-#		Default: 0
-#
-#	PlayerStart.HonorPoints
-#		Amount of honor that new players will start with
-#		Default: 0
-#
-#	PlayerStart.ArenaPoints
-#		Amount of arena points that new players will start with
-#		Default: 0
+# Extra options (custom) - ImpConfig - http://www.manground.org/forum/index.php?showforum=10
 #
 #	PlayerStart.AllReputation
 #		Players will start with most of the high level reputations that are needed for items, mounts etc.
@@ -80,20 +67,12 @@ BindIP = "0.0.0.0"
 #	PlayerStart.MapsExplored
 #		Players will start with all maps explored if enabled
 #
-#	PlayerStart.AllFlightPaths
-#		Players will start with all flight paths (Note: ALL flight paths, not only player's team)
+#	PlayerStart.DefaultGuildId
+#		New players will automatically get added to this guild if a ID is used.
 #
 #	AntiCheat.GMIsland
 #		If a player enters GM island, he will get teleported away. This will prevent cheaters from buying GM stuff
 #		on servers with a GM mall. GM's will not get teleported away.
-#
-#	GamemasterStartLevel
-#		GM starting level
-#		Default: 70 Min, max: 1 - 255
-#
-#	PlayerInstantLogout
-#		Enable or disable instant logout for all players (NOT in combat/while dueling/while falling)
-#		Default: 0 - off, 1 - on
 #
 #	EnableQueueForGMs
 #		GMs will also be added to the login queue (not gmlvl 3+) if enabled. Useful for GM servers.
@@ -102,16 +81,6 @@ BindIP = "0.0.0.0"
 #	HonorPointsAfterDuel
 #		The amount of honor points the duel winner will get after a duel.
 #		Default: 0 - disable
-#
-#	DisableWaterBreath
-#		Disable/enable waterbreathing for players
-#
-#	AlwaysMaxWeaponSkill
-#		Players will automatically gain max weapon/defense skill when logging in, leveling up etc.
-#
-#	DisableHordeOrAlliance
-#		This allows you to temporary disable creation of Horde or Alliance on unbalanced PvP servers
-#		Default: 0 - None, 1 - Disable Alliance, 2 - Disable Horde
 #
 #	PvPToken.Enable
 #		Enable/disable PvP Token System. Players will get a token after slaying another player that gives honor.
@@ -133,27 +102,14 @@ BindIP = "0.0.0.0"
 #	NoResetTalentsCost
 #		Enable or disable no cost for talent resetting
 #
-#	PlayerStart.DefaultGuildId
-#		New players will automatically get added to this guild if a ID is used.
-#
 ###################################################################################################################
 
-PlayerStart.Gold = 0
-PlayerStart.HonorPoints = 0
-PlayerStart.ArenaPoints = 0
 PlayerStart.AllReputation = 0
 PlayerStart.AllSpells = 0
-PlayerStart.MapsExplored = 0
-PlayerStart.AllFlightPaths = 0
 PlayerStart.DefaultGuildId = 0
 AntiCheat.GMIsland = 0
-GamemasterStartLevel = 70
-PlayerInstantLogout = 0
 EnableQueueForGMs = 0
 HonorPointsAfterDuel = 0
-DisableWaterBreath = 0
-AlwaysMaxWeaponSkill = 0
-DisableHordeOrAlliance = 0
 PvPToken.Enable = 0
 PvPToken.MapAllowType = 4
 PvPToken.ItemID = 29434

@@ -297,7 +297,7 @@ void WorldSession::HandleLogoutRequestOpcode( WorldPacket & /*recv_data*/ )
     }
 
     //instant logout in taverns/cities or on taxi or if its enabled in mangosd.conf (ImpConfig)
-	if(GetPlayer()->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_RESTING) || GetPlayer()->isInFlight() || sWorld.getConfig(CONFIG_INSTANT_LOGOUT))
+	if(GetPlayer()->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_RESTING) || GetPlayer()->isInFlight())
     {
         LogoutPlayer(true);
         return;

@@ -579,16 +579,9 @@ bool Player::Create( uint32 guidlow, std::string name, uint8 race, uint8 class_,
     SetUInt32Value( PLAYER_FIELD_TODAY_CONTRIBUTION, 0 );
     SetUInt32Value( PLAYER_FIELD_YESTERDAY_CONTRIBUTION, 0 );
 
-    // set starting level
-    if(GetSession()->GetSecurity() >= SEC_MODERATOR)
-		SetUInt32Value( UNIT_FIELD_LEVEL, sWorld.getConfig(CONFIG_GM_START_LEVEL) ); //ImpConfig
-	else
-		SetUInt32Value( UNIT_FIELD_LEVEL, sWorld.getConfig(CONFIG_START_PLAYER_LEVEL) );
 
-	// Starting things in impconfig
-	SetUInt32Value( PLAYER_FIELD_COINAGE, sWorld.PlayerStartGold()*10000 );
-	SetUInt32Value( PLAYER_FIELD_HONOR_CURRENCY, sWorld.getConfig(CONFIG_PLAYER_START_HONOR) );
-	SetUInt32Value( PLAYER_FIELD_ARENA_CURRENCY, sWorld.getConfig(CONFIG_PLAYER_START_ARENAPTS) );
+    SetUInt32Value( UNIT_FIELD_LEVEL, sWorld.getConfig(CONFIG_START_PLAYER_LEVEL) );
+
 	if(sWorld.getConfig(CONFIG_START_ALL_EXPLORED))
 	{
 		for (uint8 i=0; i<64; i++)
@@ -823,7 +816,7 @@ void Player::HandleDrowning()
         return;
 
     //if player is GM, have waterbreath, is dead or if breathing is disabled then return
-	if(sWorld.getConfig(CONFIG_DISABLE_BREATHING) || waterbreath || isGameMaster() || !isAlive())
+	if(waterbreath || isGameMaster() || !isAlive())
     {
         StopMirrorTimer(BREATH_TIMER);
         m_isunderwater = 0;
@@ -2175,9 +2168,6 @@ void Player::GiveLevel(uint32 level)
     InitTaxiNodesForLevel();
 
     UpdateAllStats();
-
-   if(sWorld.getConfig(CONFIG_ALWAYS_MAXSKILL)) //ImpConfig - Max weapon skill when leveling up
-         UpdateSkillsToMaxSkillsForLevel();
 
     // set current level health and mana/energy to maximum after applying all mods.
     SetHealth(GetMaxHealth());
