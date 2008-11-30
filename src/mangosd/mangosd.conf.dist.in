@@ -82,23 +82,6 @@ BindIP = "0.0.0.0"
 #		The amount of honor points the duel winner will get after a duel.
 #		Default: 0 - disable
 #
-#	PvPToken.Enable
-#		Enable/disable PvP Token System. Players will get a token after slaying another player that gives honor.
-#
-#	PvPToken.MapAllowType
-#		Where players can receive the pvp token
-#		4 - In all maps
-#		3 - In battlegrounds only
-#		2 - In FFA areas only (gurubashi arena etc)
-#		1 - In battlegrounds AND FFA areas only
-#
-#	PvPToken.ItemID
-#		The item players will get after killing an enemy if PvP Token system is enabled.
-#		Default: 29434 - Badge of justice
-#
-#	PvPToken.ItemCount
-#		Modify the item ID count - Default: 1
-#
 #	NoResetTalentsCost
 #		Enable or disable no cost for talent resetting
 #
@@ -110,10 +93,6 @@ PlayerStart.DefaultGuildId = 0
 AntiCheat.GMIsland = 0
 EnableQueueForGMs = 0
 HonorPointsAfterDuel = 0
-PvPToken.Enable = 0
-PvPToken.MapAllowType = 4
-PvPToken.ItemID = 29434
-PvPToken.ItemCount = 1
 NoResetTalentsCost = 0
 
 ###################################################################################################################

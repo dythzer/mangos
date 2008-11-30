@@ -954,12 +954,6 @@ void World::LoadConfigSettings(bool reload)
 	m_configs[CONFIG_KICK_FROM_GMISLAND] = sConfig.GetBoolDefault("AntiCheat.GMIsland", false);
 	m_configs[CONFIG_START_ALL_EXPLORED] = sConfig.GetBoolDefault("PlayerStart.MapsExplored", false);
 	m_configs[CONFIG_START_ALL_REP] = sConfig.GetBoolDefault("PlayerStart.AllReputation", false);
-	m_configs[CONFIG_PVP_TOKEN_ENABLE] = sConfig.GetBoolDefault("PvPToken.Enable", false);
-	m_configs[CONFIG_PVP_TOKEN_MAP_TYPE] = sConfig.GetIntDefault("PvPToken.MapAllowType", 4);
-	m_configs[CONFIG_PVP_TOKEN_ID] = sConfig.GetIntDefault("PvPToken.ItemID", 29434);
-	m_configs[CONFIG_PVP_TOKEN_COUNT] = sConfig.GetIntDefault("PvPToken.ItemCount", 1);
-	if(m_configs[CONFIG_PVP_TOKEN_COUNT] < 1)
-		m_configs[CONFIG_PVP_TOKEN_COUNT] = 1;
 	m_configs[CONFIG_NO_RESET_TALENT_COST] = sConfig.GetBoolDefault("NoResetTalentsCost", false);
     m_configs[CONFIG_DEFAULT_GUILD_ID] = sConfig.GetIntDefault("PlayerStart.DefaultGuildId", 0);
 	//CUSTOM OPTIONS END - ImpConfig
