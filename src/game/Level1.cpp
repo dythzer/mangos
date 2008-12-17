@@ -351,7 +351,14 @@ bool ChatHandler::HandleNamegoCommand(const char* args)
 
         Map* pMap = m_session->GetPlayer()->GetMap();
 
-        if(pMap->Instanceable())
+        if(pMap->IsBattleGroundOrArena())
+        {
+            // cannot summon to bg
+            PSendSysMessage(LANG_CANNOT_SUMMON_TO_BG,chr->GetName());
+            SetSentErrorMessage(true);
+            return false;
+        }
+        else if(pMap->IsDungeon())
         {
             Map* cMap = chr->GetMap();
             if( cMap->Instanceable() && cMap->GetInstanceId() != pMap->GetInstanceId() )
@@ -435,6 +442,28 @@ bool ChatHandler::HandleGonameCommand(const char* args)
     Player *chr = objmgr.GetPlayer(name.c_str());
     if (chr)
     {
+        Map* cMap = chr->GetMap();
+        if(cMap->IsBattleGroundOrArena())
+        {
+            // only allow if gm mode is on
+            if (!_player->isGameMaster())
+            {
+                PSendSysMessage(LANG_CANNOT_GO_TO_BG_GM,chr->GetName());
+                SetSentErrorMessage(true);
+                return false;
+            }
+            // if already in a bg, don't let port to other
+            else if (_player->GetBattleGroundId())
+            {
+                PSendSysMessage(LANG_CANNOT_GO_TO_BG_FROM_BG,chr->GetName());
+                SetSentErrorMessage(true);
+                return false;
+            }
+            // all's well, set bg id
+            // when porting out from the bg, it will be reset to 0
+            _player->SetBattleGroundId(chr->GetBattleGroundId());
+        }
+        else if(cMap->IsDungeon())
         Map* cMap = chr->GetMap();
         if(cMap->Instanceable())
         {
@@ -1028,7 +1057,7 @@ bool ChatHandler::HandleModifyASpeedCommand(const char* args)
     chr->SetSpeed(MOVE_RUN,     ASpeed,true);
     chr->SetSpeed(MOVE_SWIM,    ASpeed,true);
     //chr->SetSpeed(MOVE_TURN,    ASpeed,true);
-    chr->SetSpeed(MOVE_FLY,     ASpeed,true);
+    chr->SetSpeed(MOVE_FLIGHT,     ASpeed,true);
     return true;
 }
 
@@ -1144,7 +1173,7 @@ bool ChatHandler::HandleModifyBWalkCommand(const char* args)
     if (needReportToTarget(chr))
         ChatHandler(chr).PSendSysMessage(LANG_YOURS_BACK_SPEED_CHANGED, GetName(), BSpeed);
 
-    chr->SetSpeed(MOVE_WALKBACK,BSpeed,true);
+    chr->SetSpeed(MOVE_RUN_BACK,BSpeed,true);
 
     return true;
 }
@@ -1176,7 +1205,7 @@ bool ChatHandler::HandleModifyFlyCommand(const char* args)
     if (needReportToTarget(chr))
         ChatHandler(chr).PSendSysMessage(LANG_YOURS_FLY_SPEED_CHANGED, GetName(), FSpeed);
 
-    chr->SetSpeed(MOVE_FLY,FSpeed,true);
+    chr->SetSpeed(MOVE_FLIGHT,FSpeed,true);
 
     return true;
 }

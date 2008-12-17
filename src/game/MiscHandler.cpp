@@ -80,7 +80,7 @@ void WorldSession::HandleWhoOpcode( WorldPacket & recv_data )
     std::string player_name, guild_name;
 
     recv_data >> level_min;                                 // maximal player level, default 0
-    recv_data >> level_max;                                 // minimal player level, default 100
+    recv_data >> level_max;                                 // minimal player level, default 100 (MAX_LEVEL)
     recv_data >> player_name;                               // player name, case sensitive...
 
     // recheck
@@ -145,8 +145,8 @@ void WorldSession::HandleWhoOpcode( WorldPacket & recv_data )
 
     // client send in case not set max level value 100 but mangos support 255 max level,
     // update it to show GMs with characters after 100 level
-    if(level_max >= 100)
-        level_max = 255;
+    if(level_max >= MAX_LEVEL)
+        level_max = STRONG_MAX_LEVEL;
 
     uint32 team = _player->GetTeam();
     uint32 security = GetSecurity();
@@ -1380,7 +1380,7 @@ void WorldSession::HandleFarSightOpcode( WorldPacket & recv_data )
             sLog.outDebug("Removed FarSight from player %u", _player->GetGUIDLow());
             break;
         case 1:
-            sLog.outDebug("Added FarSight " I64FMTD " to player %u", _player->GetUInt64Value(PLAYER_FARSIGHT), _player->GetGUIDLow());
+            sLog.outDebug("Added FarSight " I64FMT " to player %u", _player->GetFarSight(), _player->GetGUIDLow());
             break;
     }
 }
@@ -1395,9 +1395,9 @@ void WorldSession::HandleChooseTitleOpcode( WorldPacket & recv_data )
     recv_data >> title;
 
     // -1 at none
-    if(title > 0 && title < 64)
+    if(title > 0 && title < 128)
     {
-       if(!GetPlayer()->HasFlag64(PLAYER__FIELD_KNOWN_TITLES,uint64(1) << title))
+       if(!GetPlayer()->HasTitle(title))
             return;
     }
     else
