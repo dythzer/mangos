@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -349,7 +349,7 @@ struct GameObjectInfo
             uint32 state2Name;                              //3
         } destructibleBuilding;
         //34 GAMEOBJECT_TYPE_TRAPDOOR
-        struct  
+        struct
         {
             uint32 whenToPause;                             // 0
             uint32 startOpen;                               // 1
@@ -375,7 +375,8 @@ struct GameObjectLocale
 struct GameObjectData
 {
     uint32 id;                                              // entry in gamobject_template
-    uint32 mapid;
+    uint16 mapid;
+    uint16 phaseMask;
     float posX;
     float posY;
     float posZ;
@@ -423,7 +424,7 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         void AddToWorld();
         void RemoveFromWorld();
 
-        bool Create(uint32 guidlow, uint32 name_id, Map *map, float x, float y, float z, float ang, float rotation0, float rotation1, float rotation2, float rotation3, uint32 animprogress, uint32 go_state);
+        bool Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMask, float x, float y, float z, float ang, float rotation0, float rotation1, float rotation2, float rotation3, uint32 animprogress, uint32 go_state);
         void Update(uint32 p_time);
         static GameObject* GetGameObject(WorldObject& object, uint64 guid);
         GameObjectInfo const* GetGOInfo() const;
@@ -453,7 +454,7 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         const char* GetNameForLocaleIdx(int32 locale_idx) const;
 
         void SaveToDB();
-        void SaveToDB(uint32 mapid, uint8 spawnMask);
+        void SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask);
         bool LoadFromDB(uint32 guid, Map *map);
         void DeleteFromDB();
         void SetLootState(LootState s) { m_lootState = s; }

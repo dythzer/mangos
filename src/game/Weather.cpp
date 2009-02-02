@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ Weather::Weather(uint32 zone, WeatherZoneChances const* weatherChances) : m_zone
 }
 
 /// Launch a weather update
-bool Weather::Update(time_t diff)
+bool Weather::Update(uint32 diff)
 {
     if (m_timer.GetCurrent()>=0)
         m_timer.Update(diff);

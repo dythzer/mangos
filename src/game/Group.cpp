@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -203,6 +203,11 @@ void Group::ConvertToRaid()
 
     if(!isBGGroup()) CharacterDatabase.PExecute("UPDATE groups SET isRaid = 1 WHERE leaderGuid='%u'", GUID_LOPART(m_leaderGuid));
     SendUpdate();
+
+    // update quest related GO states (quest activity dependent from raid membership)
+    for(member_citerator citr = m_memberSlots.begin(); citr != m_memberSlots.end(); ++citr)
+        if(Player* player = objmgr.GetPlayer(citr->guid))
+            player->UpdateForQuestsGO();
 }
 
 bool Group::AddInvite(Player *player)
@@ -288,6 +293,10 @@ bool Group::AddMember(const uint64 &guid, const char* name)
         }
         player->SetGroupUpdateFlag(GROUP_UPDATE_FULL);
         UpdatePlayerOutOfRange(player);
+
+        // quest related GO state dependent from raid memebership
+        if(isRaidGroup())
+            player->UpdateForQuestsGO();
     }
 
     return true;
@@ -300,9 +309,12 @@ uint32 Group::RemoveMember(const uint64 &guid, const uint8 &method)
     {
         bool leaderChanged = _removeMember(guid);
 
-        Player *player = objmgr.GetPlayer( guid );
-        if (player)
+        if(Player *player = objmgr.GetPlayer( guid ))
         {
+            // quest related GO state dependent from raid membership
+            if(isRaidGroup())
+                player->UpdateForQuestsGO();
+
             WorldPacket data;
 
             if(method == 1)
@@ -360,6 +372,11 @@ void Group::Disband(bool hideDestroy)
             continue;
 
         player->SetGroup(NULL);
+
+        // quest related GO state dependent from raid membership
+        if(isRaidGroup())
+            player->UpdateForQuestsGO();
+
 
         if(!player->GetSession())
             continue;
@@ -727,6 +744,8 @@ void Group::CountTheRoll(Rolls::iterator rollI, uint32 NumberOfPlayers)
 
             if(player && player->GetSession())
             {
+                player->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_ROLL_NEED_ON_LOOT, roll->itemid, maxresul);
+
                 ItemPosCountVec dest;
                 LootItem *item = &(roll->getLoot()->items[roll->itemSlot]);
                 uint8 msg = player->CanStoreNewItem( NULL_BAG, NULL_SLOT, dest, roll->itemid, item->count );
@@ -772,6 +791,8 @@ void Group::CountTheRoll(Rolls::iterator rollI, uint32 NumberOfPlayers)
 
             if(player && player->GetSession())
             {
+                player->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_ROLL_GREED_ON_LOOT, roll->itemid, maxresul);
+
                 ItemPosCountVec dest;
                 LootItem *item = &(roll->getLoot()->items[roll->itemSlot]);
                 uint8 msg = player->CanStoreNewItem( NULL_BAG, NULL_SLOT, dest, roll->itemid, item->count );

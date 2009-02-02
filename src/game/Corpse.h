@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -56,7 +56,7 @@ class Corpse : public WorldObject
         void RemoveFromWorld();
 
         bool Create( uint32 guidlow );
-        bool Create( uint32 guidlow, Player *owner, uint32 mapid, float x, float y, float z, float ang );
+        bool Create( uint32 guidlow, Player *owner );
 
         void SaveToDB();
         bool LoadFromDB(uint32 guid, QueryResult *result);

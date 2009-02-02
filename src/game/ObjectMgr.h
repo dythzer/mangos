@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -242,8 +242,6 @@ typedef std::list<GossipOption> CacheNpcOptionList;
 typedef UNORDERED_MAP<uint32, VendorItemData> CacheVendorItemMap;
 typedef UNORDERED_MAP<uint32, TrainerSpellData> CacheTrainerSpellMap;
 
-typedef std::list<const AchievementCriteriaEntry*> AchievementCriteriaEntryList;
-
 enum SkillRangeType
 {
     SKILL_RANGE_LANGUAGE,                                   // 300..300
@@ -411,7 +409,7 @@ class ObjectMgr
         uint32 GetPlayerAccountIdByGUID(const uint64 &guid) const;
         uint32 GetPlayerAccountIdByPlayerName(const std::string& name) const;
 
-        uint32 GetNearestTaxiNode( float x, float y, float z, uint32 mapid );
+        uint32 GetNearestTaxiNode( float x, float y, float z, uint32 mapid, uint32 team );
         void GetTaxiPath( uint32 source, uint32 destination, uint32 &path, uint32 &cost);
         uint16 GetTaxiMount( uint32 id, uint32 team );
         void GetTaxiPathNodes( uint32 path, Path &pathnodes, std::vector<uint32>& mapIds );
@@ -466,6 +464,7 @@ class ObjectMgr
         }
 
         AreaTrigger const* GetGoBackTrigger(uint32 Map) const;
+        AreaTrigger const* GetMapEntranceTrigger(uint32 Map) const;
 
         uint32 GetAreaTriggerScriptId(uint32 trigger_id);
 
@@ -566,10 +565,10 @@ class ObjectMgr
         void LoadNpcTextId();
         void LoadVendors();
         void LoadTrainerSpell();
-        void LoadCompletedAchievements();
 
         std::string GeneratePetName(uint32 entry);
         uint32 GetBaseXP(uint32 level);
+        uint32 GetXPForLevel(uint32 level);
 
         int32 GetFishingBaseSkillLevel(uint32 entry) const
         {
@@ -703,10 +702,7 @@ class ObjectMgr
 
         // reserved names
         void LoadReservedPlayersNames();
-        bool IsReservedName(const std::string& name) const
-        {
-            return m_ReservedNames.find(name) != m_ReservedNames.end();
-        }
+        bool IsReservedName(const std::string& name) const;
 
         // name with valid structure and symbols
         static bool IsValidName( const std::string& name, bool create = false );
@@ -771,14 +767,13 @@ class ObjectMgr
         void AddVendorItem(uint32 entry,uint32 item, uint32 maxcount, uint32 incrtime, uint32 ExtendedCost);
         bool RemoveVendorItem(uint32 entry,uint32 item);
         bool IsVendorItemValid( uint32 vendor_entry, uint32 item, uint32 maxcount, uint32 ptime, uint32 ExtendedCost, Player* pl = NULL, std::set<uint32>* skip_vendors = NULL ) const;
-        void LoadAchievementCriteriaList();
-        AchievementCriteriaEntryList const& GetAchievementCriteriaByType(AchievementCriteriaTypes type);
-        std::set<uint32> allCompletedAchievements;
 
         void LoadScriptNames();
         ScriptNameMap &GetScriptNames() { return m_scriptNames; }
         const char * GetScriptName(uint32 id) { return id < m_scriptNames.size() ? m_scriptNames[id].c_str() : ""; }
         uint32 GetScriptId(const char *name);
+
+        int GetOrNewIndexForLocale(LocaleConstant loc);
     protected:
 
         // first free id for selected id type
@@ -836,7 +831,7 @@ class ObjectMgr
         PetCreateSpellMap   mPetCreateSpell;
 
         //character reserved names
-        typedef std::set<std::string> ReservedNamesMap;
+        typedef std::set<std::wstring> ReservedNamesMap;
         ReservedNamesMap    m_ReservedNames;
 
         GraveYardMap        mGraveYardMap;
@@ -847,7 +842,6 @@ class ObjectMgr
 
         typedef             std::vector<LocaleConstant> LocalForIndex;
         LocalForIndex        m_LocalForIndex;
-        int GetOrNewIndexForLocale(LocaleConstant loc);
 
         int DBCLocaleIndex;
 
@@ -865,6 +859,9 @@ class ObjectMgr
 
         void BuildPlayerLevelInfo(uint8 race, uint8 class_, uint8 level, PlayerLevelInfo* plinfo) const;
         PlayerInfo playerInfo[MAX_RACES][MAX_CLASSES];
+
+        typedef std::vector<uint32> PlayerXPperLevel;       // [level]
+        PlayerXPperLevel mPlayerXPperLevel;
 
         typedef std::map<uint32,uint32> BaseXPMap;          // [area level][base xp]
         BaseXPMap mBaseXPTable;
@@ -901,9 +898,6 @@ class ObjectMgr
         CacheNpcTextIdMap m_mCacheNpcTextIdMap;
         CacheVendorItemMap m_mCacheVendorItemMap;
         CacheTrainerSpellMap m_mCacheTrainerSpellMap;
-
-        // store achievement criterias by type to speed up lookup
-        AchievementCriteriaEntryList m_AchievementCriteriasByType[ACHIEVEMENT_CRITERIA_TYPE_TOTAL];
 };
 
 #define objmgr MaNGOS::Singleton<ObjectMgr>::Instance()

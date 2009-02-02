@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@ void AuthCrypt::SetKey(BigNumber *bn)
     GenerateKey(key, bn);
     _key.resize(SHA_DIGEST_LENGTH);
     std::copy(key, key + SHA_DIGEST_LENGTH, _key.begin());
-    delete key;
+    delete[] key;
 }
 
 AuthCrypt::~AuthCrypt()

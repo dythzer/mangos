@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ namespace MaNGOS
         class MANGOS_DLL_DECL ObjectLifeTime
     {
         public:
-            inline static void ScheduleCall(void (*destroyer)() )
+            static void ScheduleCall(void (*destroyer)() )
             {
                 at_exit( destroyer );
             }
@@ -42,7 +42,7 @@ namespace MaNGOS
     };
 
     template <class T>
-        inline void ObjectLifeTime<T>::OnDeadReference(void)// We don't handle Dead Reference for now
+        void ObjectLifeTime<T>::OnDeadReference(void)       // We don't handle Dead Reference for now
     {
         throw std::runtime_error("Dead Reference");
     }

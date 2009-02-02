@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ bool DynamicObject::Create( uint32 guidlow, Unit *caster, uint32 spellId, uint32
 {
     SetInstanceId(caster->GetInstanceId());
 
-    WorldObject::_Create(guidlow, HIGHGUID_DYNAMICOBJECT, caster->GetMapId());
+    WorldObject::_Create(guidlow, HIGHGUID_DYNAMICOBJECT, caster->GetMapId(), caster->GetPhaseMask());
     Relocate(x,y,z,0);
 
     if(!IsPositionValid())

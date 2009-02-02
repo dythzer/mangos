@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,9 +49,9 @@ class MANGOS_DLL_DECL WorldLog : public MaNGOS::Singleton<WorldLog, MaNGOS::Clas
     public:
         void Initialize();
         /// Is the world logger active?
-        inline bool LogWorld(void) const { return (i_file != NULL); }
+        bool LogWorld(void) const { return (i_file != NULL); }
         /// %Log to the file
-        inline void Log(char const *fmt, ...)
+        void Log(char const *fmt, ...)
         {
             if( LogWorld() )
             {

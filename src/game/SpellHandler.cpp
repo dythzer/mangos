@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -125,59 +125,7 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
     if(!Script->ItemUse(pUser,pItem,targets))
     {
         // no script or script not process request by self
-
-        // special learning case
-        if((pItem->GetProto()->Spells[0].SpellId==SPELL_ID_GENERIC_LEARN) || (pItem->GetProto()->Spells[0].SpellId==SPELL_ID_GENERIC_LEARN_PET))
-        {
-            uint32 learn_spell_id = pItem->GetProto()->Spells[0].SpellId;
-            uint32 learning_spell_id = pItem->GetProto()->Spells[1].SpellId;
-
-            SpellEntry const *spellInfo = sSpellStore.LookupEntry(learn_spell_id);
-            if(!spellInfo)
-            {
-                sLog.outError("Item (Entry: %u) in have wrong spell id %u, ignoring ",proto->ItemId, learn_spell_id);
-                pUser->SendEquipError(EQUIP_ERR_NONE,pItem,NULL);
-                return;
-            }
-
-            Spell *spell = new Spell(pUser, spellInfo, false);
-            spell->m_CastItem = pItem;
-            spell->m_cast_count = cast_count;               //set count of casts
-            spell->m_currentBasePoints[0] = learning_spell_id;
-            spell->prepare(&targets);
-            return;
-        }
-
-        // use triggered flag only for items with many spell casts and for not first cast
-        int count = 0;
-
-        for(int i = 0; i < 5; ++i)
-        {
-            _Spell const& spellData = pItem->GetProto()->Spells[i];
-
-            // no spell
-            if(!spellData.SpellId)
-                continue;
-
-            // wrong triggering type
-            if( spellData.SpellTrigger != ITEM_SPELLTRIGGER_ON_USE && spellData.SpellTrigger != ITEM_SPELLTRIGGER_ON_NO_DELAY_USE)
-                continue;
-
-            SpellEntry const *spellInfo = sSpellStore.LookupEntry(spellData.SpellId);
-            if(!spellInfo)
-            {
-                sLog.outError("Item (Entry: %u) in have wrong spell id %u, ignoring ",proto->ItemId, spellData.SpellId);
-                continue;
-            }
-
-            Spell *spell = new Spell(pUser, spellInfo, (count > 0));
-            spell->m_CastItem = pItem;
-            spell->m_cast_count = cast_count;               // set count of casts
-            spell->m_glyphIndex = glyphIndex;               // glyph index
-            spell->prepare(&targets);
-
-            ++count;
-        }
+        pUser->CastItemUseSpell(pItem,targets,cast_count,glyphIndex);
     }
 }
 
@@ -282,6 +230,16 @@ void WorldSession::HandleGameObjectUseOpcode( WorldPacket & recv_data )
     obj->Use(_player);
 }
 
+void WorldSession::HandleGameobjectReportUse(WorldPacket& recvPacket)
+{
+    CHECK_PACKET_SIZE(recvPacket,8);
+
+    uint64 guid;
+    recvPacket >> guid;
+
+    sLog.outDebug( "WORLD: Recvd CMSG_GAMEOBJ_REPORT_USE Message [in game guid: %u]", GUID_LOPART(guid));
+}
+
 void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
 {
     CHECK_PACKET_SIZE(recvPacket,1+4+1);
@@ -303,8 +261,8 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    // not have spell or spell passive and not casted by client
-    if ( !_player->HasSpell (spellId) || IsPassiveSpell(spellId) )
+    // not have spell in spellbook or spell passive and not casted by client
+    if ( !_player->HasActiveSpell (spellId) || IsPassiveSpell(spellId) )
     {
         //cheater? kick? ban?
         return;
@@ -399,7 +357,7 @@ void WorldSession::HandlePetCancelAuraOpcode( WorldPacket& recvPacket)
         return;
     }
 
-    Creature* pet=ObjectAccessor::GetCreatureOrPet(*_player,guid);
+    Creature* pet=ObjectAccessor::GetCreatureOrPetOrVehicle(*_player,guid);
 
     if(!pet)
     {

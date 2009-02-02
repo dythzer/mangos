@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,4 +25,5 @@ class Player;
 
 void LoadSkillDiscoveryTable();
 uint32 GetSkillDiscoverySpell(uint32 skillId, uint32 spellId, Player* player);
+uint32 GetExplicitDiscoverySpell(uint32 spellId, Player* player);
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -143,6 +143,7 @@ bool Transport::Create(uint32 guidlow, uint32 mapid, float x, float y, float z, 
     Relocate(x,y,z,ang);
 
     SetMapId(mapid);
+    // instance id and phaseMask isn't set to values different from std.
 
     if(!IsPositionValid())
     {
@@ -473,11 +474,8 @@ bool Transport::AddPassenger(Player* passenger)
 
 bool Transport::RemovePassenger(Player* passenger)
 {
-    if (m_passengers.find(passenger) != m_passengers.end())
-    {
+    if (m_passengers.erase(passenger))
         sLog.outDetail("Player %s removed from transport %s.", passenger->GetName(), m_name.c_str());
-        m_passengers.erase(passenger);
-    }
     return true;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +41,6 @@
 #include "SpellAuras.h"
 #include "Pet.h"
 #include "SocialMgr.h"
-#include "Tools.h"
 
 void WorldSession::HandleRepopRequestOpcode( WorldPacket & /*recv_data*/ )
 {
@@ -301,7 +300,7 @@ void WorldSession::HandleLogoutRequestOpcode( WorldPacket & /*recv_data*/ )
     // not set flags if player can't free move to prevent lost state at logout cancel
     if(GetPlayer()->CanFreeMove())
     {
-        GetPlayer()->SetStandState(PLAYER_STATE_SIT);
+        GetPlayer()->SetStandState(UNIT_STAND_STATE_SIT);
 
         WorldPacket data( SMSG_FORCE_MOVE_ROOT, (8+4) );    // guess size
         data.append(GetPlayer()->GetPackGUID());
@@ -341,7 +340,7 @@ void WorldSession::HandleLogoutCancelOpcode( WorldPacket & /*recv_data*/ )
         SendPacket( &data );
 
         //! Stand Up
-        GetPlayer()->SetStandState(PLAYER_STATE_NONE);
+        GetPlayer()->SetStandState(UNIT_STAND_STATE_STAND);
 
         //! DISABLE_ROTATE
         GetPlayer()->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED);
@@ -809,7 +808,7 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket & recv_data)
         GetPlayer()->SetRestType(REST_TYPE_IN_TAVERN);
 
         if(sWorld.IsFFAPvPRealm())
-            GetPlayer()->RemoveFlag(PLAYER_FLAGS,PLAYER_FLAGS_FFA_PVP);
+            GetPlayer()->RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
 
         return;
     }
@@ -956,7 +955,7 @@ void WorldSession::HandleRequestAccountData(WorldPacket& recv_data)
     dest.resize(size);
 
     uLongf destSize = size;
-    if(compress(const_cast<uint8*>(dest.contents()), &destSize, (uint8*)adata->Data.c_str(), size) != Z_OK)
+    if(size && compress(const_cast<uint8*>(dest.contents()), &destSize, (uint8*)adata->Data.c_str(), size) != Z_OK)
     {
         sLog.outDebug("RAD: Failed to compress account data");
         return;
@@ -1649,7 +1648,7 @@ void WorldSession::HandleInspectAchievements( WorldPacket & recv_data )
 {
     CHECK_PACKET_SIZE(recv_data, 1);
     uint64 guid;
-    if(!readGUID(recv_data, guid))
+    if(!recv_data.readPackGUID(guid))
         return;
 
     Player *player = objmgr.GetPlayer(guid);

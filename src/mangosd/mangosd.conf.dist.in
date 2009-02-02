@@ -346,9 +346,9 @@ LogColors = ""
 #
 #    Expansion
 #        Allow server use content from expansion
-#                 2 - check expansion 2 maps existence, and if client support expansion 2 and account have
+#        Default: 2 - check expansion 2 maps existence, and if client support expansion 2 and account have
 #                     expansion 2 setting then allow visit expansion 2 maps, allow create new class character)
-#        Default: 1 - check expansion 1 maps existence, and if client support expansion 1 and account have
+#                 1 - check expansion 1 maps existence, and if client support expansion 1 and account have
 #                     expansion 1 setting then allow visit expansion 1 maps, allow create new races character)
 #                 0 - not check expansion maps existence, not allow wisit its, not allow create new race or new class
 #                     characters, ignore account expansion setting)
@@ -413,6 +413,13 @@ LogColors = ""
 #        Default: 1
 #                The number must be between 0 (not allowed) and 10
 #
+#    MinLevelForHeroicCharacterCreating
+#        Limit creating heroic characters only for account with another character of specific level (ignored for GM accounts)
+#                 0  - not require any existed chaarcter
+#                 1  - require at least any character existed
+#        Default: 55 - default requirement
+#
+#
 #    SkipCinematics
 #        Disable in-game script movie at first character's login(allows to prevent buggy intro in case of custom start location coordinates)
 #        Default: 0 - show intro for each new characrer
@@ -468,8 +475,8 @@ LogColors = ""
 #
 #    AlwaysMaxSkillForLevel
 #        Players will automatically gain max level dependent (weapon/defense) skill when logging in, leveling up etc.
-#        Default: 0 (true)
-#                 1 (false)
+#        Default: 0 (false)
+#                 1 (true)
 #
 #    ActivateWeather
 #        Activate weather system
@@ -483,11 +490,15 @@ LogColors = ""
 #
 #    Battleground.QueueAnnouncer.Enable
 #        Enable queue announcer posting to chat
-#        Default: 1 (true)
-#                 0 (false)
+#        Default: 0 (false)
+#                 1 (true)
 #
 #    Battleground.QueueAnnouncer.PlayerOnly
 #        Enable queue announcer posting to chat
+#        Default: 0 (false)
+#                 1 (true)
+#
+#    Arena.QueueAnnouncer.Enable: Enable queue announcer posting to chat
 #        Default: 0 (false)
 #                 1 (true)
 #
@@ -580,6 +591,7 @@ CharactersCreatingDisabled = 0
 CharactersPerAccount = 50
 CharactersPerRealm = 10
 HeroicCharactersPerRealm = 1
+MinLevelForHeroicCharacterCreating = 55
 SkipCinematics = 0
 MaxPlayerLevel = 80
 StartPlayerLevel = 1
@@ -595,8 +607,9 @@ AllFlightPaths = 0
 AlwaysMaxSkillForLevel = 0
 ActivateWeather = 1
 Battleground.CastDeserter = 1
-Battleground.QueueAnnouncer.Enable = 1
+Battleground.QueueAnnouncer.Enable = 0
 Battleground.QueueAnnouncer.PlayerOnly = 0
+Arena.QueueAnnouncer.Enable = 0
 CastUnstuck = 1
 Instance.IgnoreLevel = 0
 Instance.IgnoreRaid = 0
@@ -820,6 +833,12 @@ Channel.SilentlyGMJoin = 0
 #                 0 (disable)
 #                 1 (enable)
 #
+#    GM.Visible
+#        GM visibility at login
+#        Default: 2 (last save state)
+#                 0 (invisible)
+#                 1 (visible)
+#
 #    GM.AcceptTickets
 #        Is GM accepting tickets from player by default or not.
 #        Default: 2 (last save state)
@@ -857,16 +876,29 @@ Channel.SilentlyGMJoin = 0
 #        GM starting level (1-100)
 #        Default: 1
 #
+#    GM.LowerSecurity
+#        Disallow a lower security member to interact with a higher one using commands
+#        Default: 0 (disable)
+#                 1 (enable)
+#
+#    GM.AllowAchievementGain
+#        If enabled it allows gaining achievements for GM characters
+#        Default: 0 (disable)
+#                 1 (enable) (default)
+#
 ###################################################################################################################
 
-GM.LoginState     = 2
-GM.AcceptTickets  = 2
-GM.Chat           = 2
-GM.WhisperingTo   = 2
-GM.InGMList       = 0
-GM.InWhoList      = 0
-GM.LogTrade       = 1
-GM.StartLevel     = 1
+GM.LoginState            = 2
+GM.Visible               = 2
+GM.AcceptTickets         = 2
+GM.Chat                  = 2
+GM.WhisperingTo          = 2
+GM.InGMList              = 0
+GM.InWhoList             = 0
+GM.LogTrade              = 1
+GM.StartLevel            = 1
+GM.LowerSecurity         = 0
+GM.AllowAchievementGain  = 1
 
 ###################################################################################################################
 # VISIBILITY AND RADIUSES
@@ -880,9 +912,9 @@ GM.StartLevel     = 1
 #    Visibility.Distance.Creature
 #    Visibility.Distance.Player
 #        Visibility distance for different in game object
-#        Max limited by active player zone: ~ 333
+#        Max limited by active player zone: ~ 166
 #        Min limit dependent from objects
-#        Default: 132 (cell size)
+#        Default: 66 (cell size)
 #        Min limit is max aggro radius (45) * Rate.Creature.Aggro
 #
 #    Visibility.Distance.Object
@@ -908,10 +940,10 @@ GM.StartLevel     = 1
 ###################################################################################################################
 
 Visibility.GroupMode = 0
-Visibility.Distance.Creature      = 132
-Visibility.Distance.Player        = 132
-Visibility.Distance.Object        = 132
-Visibility.Distance.InFlight      = 132
+Visibility.Distance.Creature      = 66
+Visibility.Distance.Player        = 66
+Visibility.Distance.Object        = 66
+Visibility.Distance.InFlight      = 66
 Visibility.Distance.Grey.Unit   = 1
 Visibility.Distance.Grey.Object = 10
 
@@ -952,10 +984,6 @@ Visibility.Distance.Grey.Object = 10
 #    Rate.XP.Quest
 #    Rate.XP.Explore
 #        XP rates
-#        Default: 1
-#
-#    Rate.XP.PastLevel70
-#        XP needed per level past 70 (Rates below 1 not recommended)
 #        Default: 1
 #
 #    Rate.Rest.InGame
@@ -1039,6 +1067,12 @@ Visibility.Distance.Grey.Object = 10
 #         Default: 1 (enabled)
 #                  0 (disabled)
 #
+#    Death.Bones.World
+#    Death.Bones.BattlegroundOrArena
+#         Enabled/disabled creating bones instead corpse at resurrection (in normal zones/instacnes, or battleground/arenas)
+#         Default: 1 (enabled)
+#                  0 (disabled)
+#
 ###################################################################################################################
 
 Rate.Health = 1
@@ -1061,7 +1095,6 @@ Rate.Drop.Money = 1
 Rate.XP.Kill    = 1
 Rate.XP.Quest   = 1
 Rate.XP.Explore = 1
-Rate.XP.PastLevel70 = 1
 Rate.Rest.InGame = 1
 Rate.Rest.Offline.InTavernOrCity = 1
 Rate.Rest.Offline.InWilderness = 1
@@ -1092,6 +1125,8 @@ DurabilityLossChance.Block  = 0.05
 Death.SicknessLevel = 11
 Death.CorpseReclaimDelay.PvP = 1
 Death.CorpseReclaimDelay.PvE = 1
+Death.Bones.World = 1
+Death.Bones.BattlegroundOrArena = 1
 
 ###################################################################################################################
 #
@@ -1114,12 +1149,21 @@ Death.CorpseReclaimDelay.PvE = 1
 #                         in days
 #             Default: 7 (weekly)
 #
+# ArenaSeason.ID: current area season id show in client
+#             Default: 1
+#
+# ArenaSeason.InProgress: current area season state
+#             Default: 1 (active)
+#                      0 (finished)
+#
 ###################################################################################################################
 
 Arena.MaxRatingDifference = 0
 Arena.RatingDiscardTimer = 60000
 Arena.AutoDistributePoints = 0
 Arena.AutoDistributeInterval = 7
+Arena.ArenaSeason.ID = 1
+Arena.ArenaSeason.InProgress = 1
 
 ###################################################################################################################
 #

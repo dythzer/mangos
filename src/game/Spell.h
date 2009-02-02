@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -150,6 +150,7 @@ class SpellCastTargets
         Unit *getUnitTarget() const { return m_unitTarget; }
         void setUnitTarget(Unit *target);
         void setDestination(float x, float y, float z);
+        void setSource(float x, float y, float z);
 
         uint64 getGOTargetGUID() const { return m_GOTargetGUID; }
         GameObject *getGOTarget() const { return m_GOTarget; }
@@ -290,6 +291,7 @@ class Spell
         void EffectCharge(uint32 i);
         void EffectProspecting(uint32 i);
         void EffectMilling(uint32 i);
+        void EffectRenamePet(uint32 i);
         void EffectSendTaxi(uint32 i);
         void EffectSummonCritter(uint32 i);
         void EffectKnockBack(uint32 i);
@@ -321,7 +323,7 @@ class Spell
         Spell( Unit* Caster, SpellEntry const *info, bool triggered, uint64 originalCasterGUID = 0, Spell** triggeringContainer = NULL );
         ~Spell();
 
-        void prepare(SpellCastTargets * targets, Aura* triggeredByAura = NULL);
+        void prepare(SpellCastTargets const* targets, Aura* triggeredByAura = NULL);
         void cancel();
         void update(uint32 difftime);
         void cast(bool skipCheck = false);
@@ -354,11 +356,10 @@ class Spell
         bool HaveTargetsForEffect(uint8 effect) const;
         void Delayed();
         void DelayedChannel();
-        inline uint32 getState() const { return m_spellState; }
+        uint32 getState() const { return m_spellState; }
         void setState(uint32 state) { m_spellState = state; }
 
         void DoCreateItem(uint32 i, uint32 itemtype);
-
         void WriteSpellGoTargets( WorldPacket * data );
         void WriteAmmoToPacket( WorldPacket * data );
         void FillTargetMap();
@@ -388,6 +389,7 @@ class Spell
         Item* m_CastItem;
         uint8 m_cast_count;
         uint32 m_glyphIndex;
+        uint32 m_preCastSpell;
         SpellCastTargets m_targets;
 
         int32 GetCastTime() const { return m_casttime; }
@@ -453,7 +455,14 @@ class Spell
         uint8 m_runesState;
 
         uint8 m_delayAtDamageCount;
-        int32 GetNextDelayAtDamageMsTime() { return m_delayAtDamageCount < 5 ? 1000 - (m_delayAtDamageCount++)* 200 : 200; }
+        bool isDelayableNoMore()
+        {
+            if(m_delayAtDamageCount >= 2)
+                return true;
+
+            m_delayAtDamageCount++;
+            return false;
+        }
 
         // Delayed spells system
         uint64 m_delayStart;                                // time of spell delay start, filled by event handler, zero = just started
@@ -480,17 +489,23 @@ class Spell
         // -------------------------------------------
         GameObject* focusObject;
 
+        // Damage and healing in effects need just calculate
+        int32 m_damage;           // Damge   in effects count here
+        int32 m_healing;          // Healing in effects count here
+        int32 m_healthLeech;      // Health leech in effects for all targets count here
+
         //******************************************
         // Spell trigger system
         //******************************************
-        void doTriggers(SpellMissInfo missInfo, uint32 damage=0, SpellSchoolMask damageSchoolMask = SPELL_SCHOOL_MASK_NONE, uint32 block=0, uint32 absorb=0, bool crit=false);
+        bool   m_canTrigger;                  // Can start trigger (m_IsTriggeredSpell can`t use for this)
+        uint32 m_procAttacker;                // Attacker trigger flags
+        uint32 m_procVictim;                  // Victim   trigger flags
+        void   prepareDataForTriggerSystem();
 
         //*****************************************
         // Spell target subsystem
         //*****************************************
         // Targets store structures and data
-        uint32 m_countOfHit;
-        uint32 m_countOfMiss;
         struct TargetInfo
         {
             uint64 targetGUID;

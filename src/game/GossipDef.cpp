@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -125,7 +125,7 @@ bool PlayerMenu::GossipOptionCoded( unsigned int Selection )
 void PlayerMenu::SendGossipMenu( uint32 TitleTextId, uint64 npcGUID )
 {
     WorldPacket data( SMSG_GOSSIP_MESSAGE, (100) );         // guess size
-    data << npcGUID;
+    data << uint64(npcGUID);
     data << uint32(0);                                      // new 2.4.0
     data << uint32( TitleTextId );
     data << uint32( mGossipMenu.MenuItemCount() );          // max count 0x0F
@@ -593,10 +593,17 @@ void PlayerMenu::SendQuestQueryResponse( Quest const *pQuest )
             data << uint32(pQuest->ReqCreatureOrGOId[iI]);
         }
         data << uint32(pQuest->ReqCreatureOrGOCount[iI]);
-        data << uint32(pQuest->ReqItemId[iI]);
-        data << uint32(pQuest->ReqItemCount[iI]);
         data << uint32(0);                                  // added in WotLK, dunno if offset if correct
     }
+
+    for (iI = 0; iI < QUEST_OBJECTIVES_COUNT; ++iI)
+    {
+        data << uint32(pQuest->ReqItemId[iI]);
+        data << uint32(pQuest->ReqItemCount[iI]);
+    }
+
+    data << uint32(0);                                      // TODO: 5 item objective
+    data << uint32(0);
 
     for (iI = 0; iI < QUEST_OBJECTIVES_COUNT; iI++)
         data << ObjectiveText[iI];

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -66,7 +66,6 @@ enum PetSpellType
 
 struct PetSpell
 {
-    uint16 slotId;
     uint16 active;
 
     PetSpellState state : 16;
@@ -104,7 +103,7 @@ enum PetNameInvalidReason
     PET_NAME_DECLENSION_DOESNT_MATCH_BASE_NAME              = 16
 };
 
-typedef UNORDERED_MAP<uint16, PetSpell*> PetSpellMap;
+typedef UNORDERED_MAP<uint32, PetSpell*> PetSpellMap;
 typedef std::map<uint32,uint32> TeachSpellMap;
 typedef std::vector<uint32> AutoSpellList;
 
@@ -131,9 +130,9 @@ class Pet : public Creature
         bool isControlled() const { return getPetType()==SUMMON_PET || getPetType()==HUNTER_PET; }
         bool isTemporarySummoned() const { return m_duration > 0; }
 
-        bool Create (uint32 guidlow, Map *map, uint32 Entry, uint32 pet_number);
+        bool Create (uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, uint32 pet_number);
         bool CreateBaseAtCreature(Creature* creature);
-        bool LoadPetFromDB( Unit* owner,uint32 petentry = 0,uint32 petnumber = 0, bool current = false );
+        bool LoadPetFromDB( Player* owner,uint32 petentry = 0,uint32 petnumber = 0, bool current = false );
         void SavePetToDB(PetSaveMode mode);
         void Remove(PetSaveMode mode, bool returnreagent = false);
         static void DeleteFromDB(uint32 guidlow);
@@ -189,12 +188,12 @@ class Pet : public Creature
         void _LoadSpells();
         void _SaveSpells();
 
-        bool addSpell(uint16 spell_id,uint16 active = ACT_DECIDE, PetSpellState state = PETSPELL_NEW, uint16 slot_id=0xffff, PetSpellType type = PETSPELL_NORMAL);
-        bool learnSpell(uint16 spell_id);
+        bool addSpell(uint32 spell_id,uint16 active = ACT_DECIDE, PetSpellState state = PETSPELL_NEW, PetSpellType type = PETSPELL_NORMAL);
+        bool learnSpell(uint32 spell_id);
         void learnLevelupSpells();
-        bool unlearnSpell(uint16 spell_id);
-        bool removeSpell(uint16 spell_id);
-        bool _removeSpell(uint16 spell_id);
+        bool unlearnSpell(uint32 spell_id);
+        bool removeSpell(uint32 spell_id);
+        bool _removeSpell(uint32 spell_id);
 
         PetSpellMap     m_spells;
         TeachSpellMap   m_teachspells;
@@ -202,15 +201,20 @@ class Pet : public Creature
 
         void InitPetCreateSpells();
         void CheckLearning(uint32 spellid);
+
+        bool resetTalents(bool no_cost = false);
         uint32 resetTalentsCost() const;
-        uint8 GetMaxTalentPointsForLevel(uint32 level) { return (level >= 20) ? ((level - 16) / 4) : 0; }
+        void InitTalentForLevel();
+
+        uint8 GetMaxTalentPointsForLevel(uint32 level);
         uint8 GetFreeTalentPoints() { return GetByteValue(UNIT_FIELD_BYTES_1, 1); }
         void SetFreeTalentPoints(uint8 points) { SetByteValue(UNIT_FIELD_BYTES_1, 1, points); }
 
         uint32  m_resetTalentsCost;
         time_t  m_resetTalentsTime;
+        uint32  m_usedTalentCount;
 
-        uint64 GetAuraUpdateMask() { return m_auraUpdateMask; }
+        const uint64& GetAuraUpdateMask() const { return m_auraUpdateMask; }
         void SetAuraUpdateMask(uint8 slot) { m_auraUpdateMask |= (uint64(1) << slot); }
         void ResetAuraUpdateMask() { m_auraUpdateMask = 0; }
 

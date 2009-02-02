@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -164,16 +164,16 @@ void WorldSession::SendTrainerList( uint64 guid, const std::string& strTitle )
     {
         TrainerSpell const* tSpell = *itr;
 
-        if(!_player->IsSpellFitByClassAndRace(tSpell->spell))
+        if(!_player->IsSpellFitByClassAndRace(tSpell->learned_spell))
             continue;
 
         ++count;
 
-        bool primary_prof_first_rank = spellmgr.IsPrimaryProfessionFirstRankSpell(tSpell->spell);
+        bool primary_prof_first_rank = spellmgr.IsPrimaryProfessionFirstRankSpell(tSpell->learned_spell);
 
-        SpellChainNode const* chain_node = spellmgr.GetSpellChainNode(tSpell->spell);
+        SpellChainNode const* chain_node = spellmgr.GetSpellChainNode(tSpell->learned_spell);
 
-        data << uint32(tSpell->spell);
+        data << uint32(tSpell->spell);                      // learned spell (or cast-spell in profession case)
         data << uint8(_player->GetTrainerSpellState(tSpell));
         data << uint32(floor(tSpell->spellcost * fDiscountMod));
 
@@ -238,6 +238,8 @@ void WorldSession::HandleTrainerBuySpellOpcode( WorldPacket & recv_data )
     if(_player->GetMoney() < nSpellCost )
         return;
 
+    _player->ModifyMoney( -int32(nSpellCost) );
+
     WorldPacket data(SMSG_PLAY_SPELL_VISUAL, 12);           // visual effect on trainer
     data << uint64(guid) << uint32(0xB3);
     SendPacket(&data);
@@ -246,13 +248,15 @@ void WorldSession::HandleTrainerBuySpellOpcode( WorldPacket & recv_data )
     data << uint64(_player->GetGUID()) << uint32(0x016A);
     SendPacket(&data);
 
-    _player->ModifyMoney( -int32(nSpellCost) );
-
-    // learn explicitly to prevent lost money at lags, learning spell will be only show spell animation
-    _player->learnSpell(trainer_spell->spell);
+    // learn explicitly or cast explicitly
+    if(trainer_spell->IsCastable ())
+        //FIXME: prof. spell entry in trainer list not marked gray until list re-open.
+        _player->CastSpell(_player,trainer_spell->spell,true);
+    else
+        _player->learnSpell(spellId,false);
 
     data.Initialize(SMSG_TRAINER_BUY_SUCCEEDED, 12);
-    data << uint64(guid) << uint32(spellId);
+    data << uint64(guid) << uint32(trainer_spell->spell);
     SendPacket(&data);
 }
 

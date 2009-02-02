@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1224,7 +1224,14 @@ enum Opcodes
     SMSG_SERVER_BUCK_DATA_START                     = 0x4A3,
     CMSG_QUERY_VEHICLE_STATUS                       = 0x4A4,
     SMSG_PET_GUIDS                                  = 0x4A5,
-    NUM_MSG_TYPES                                   = 0x4A6
+    SMSG_CLIENTCACHE_VERSION                        = 0x4A6,
+    UMSG_UNKNOWN_1191                               = 0x4A7,
+    UMSG_UNKNOWN_1192                               = 0x4A8,
+    UMSG_UNKNOWN_1193                               = 0x4A9,
+    UMSG_UNKNOWN_1194                               = 0x4AA,
+    UMSG_UNKNOWN_1195                               = 0x4AB,
+    UMSG_UNKNOWN_1196                               = 0x4AC,
+    NUM_MSG_TYPES                                   = 0x4AD
 };
 
 /// Player state

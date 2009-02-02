@@ -1,4 +1,4 @@
-# Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+# Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -95,6 +95,76 @@ pkgdata_DATA = \
 	2008_12_22_17_mangos_item_template.sql \
 	2008_12_22_18_characters_characters.sql \
 	2008_12_22_19_characters_item_instance.sql \
+	6936_01_mangos_spell_chain.sql \
+	6939_01_mangos_quest_template.sql \
+	6940_01_mangos_spell_learn_spell.sql \
+	6941_01_mangos_spell_learn_spell.sql \
+	6944_01_mangos_mangos_string.sql \
+	6958_01_mangos_spell_proc_event.sql \
+	6960_01_mangos_command.sql \
+	6960_02_mangos_string.sql \
+	6961_01_mangos_command.sql \
+	6970_01_mangos_playercreateinfo.sql \
+	6976_01_realmd_realmd_db_version.sql \
+	6976_02_characters_character_db_version.sql \
+	7002_01_mangos_spell_chain.sql \
+	7015_01_mangos_item_template.sql \
+	7024_01_mangos_spell_chain.sql \
+	7026_01_mangos_battleground_template.sql \
+	7031_01_mangos_spell_proc_event.sql \
+	7033_01_mangos_spell_proc_event.sql \
+	7034_01_mangos_spell_proc_event.sql \
+	7040_01_mangos_achievement_reward.sql \
+	7044_01_mangos_spell_proc_event.sql \
+	7047_01_characters_character_spell.sql \
+	7047_02_mangos_playercreateinfo_action.sql \
+	7047_03_mangos_playercreateinfo_spell.sql \
+	7050_01_mangos_spell_proc_event.sql \
+	7051_01_mangos_spell_proc_event.sql \
+	7052_01_mangos_spell_proc_event.sql \
+	7053_01_mangos_spell_proc_event.sql \
+	7056_01_mangos_spell_proc_event.sql \
+	7059_01_characters_character_spell.sql \
+	7059_02_characters_pet_spell.sql \
+	7060_01_mangos_spell_proc_event.sql \
+	7061_01_mangos_spell_proc_event.sql \
+	7063_01_mangos_spell_proc_event.sql \
+	7067_01_mangos_playercreateinfo_spell.sql \
+	7067_02_mangos_spell_learn_spell.sql \
+	7067_03_characters_character_spell.sql \
+	7074_01_mangos_playercreateinfo_spell.sql \
+	7075_01_characters_character_spell.sql \
+	7075_02_mangos_spell_learn_spell.sql \
+	7077_01_characters_character_spell.sql \
+	7078_01_mangos_spell_proc_event.sql \
+	7092_01_mangos_player_xp_for_level.sql \
+	7097_01_mangos_spell_proc_event.sql \
+	7100_01_characters_character_spell.sql \
+	7107_01_mangos_string.sql \
+	7113_01_characters_character_achievement_progress.sql \
+	7118_01_mangos_skill_discovery_template.sql \
+	7133_01_mangos_skill_discovery_template.sql \
+	7133_02_mangos_spell_loot_template.sql \
+	7141_01_mangos_instance_template.sql \
+	7147_01_mangos_creature_template.sql \
+	7149_01_mangos_spell_proc_event.sql \
+	7150_01_mangos_playercreateinfo_spell.sql \
+	7156_01_mangos_spell_proc_event.sql \
+	7168_01_mangos_command.sql \
+	7175_01_mangos_spell_proc_event.sql \
+	7193_01_mangos_mangos_string.sql \
+	7196_01_mangos_spell_chain.sql \
+	7196_02_mangos_spell_bonus_data.sql \
+	7198_01_characters_characters.sql \
+	7199_01_mangos_spell_bonus_data.sql \
+	7199_02_mangos_spell_proc_event.sql \
+	7205_01_mangos_spell_chain.sql \
+	7207_01_mangos_creature.sql \
+	7207_02_mangos_gameobject.sql \
+	7207_03_characters_corpse.sql \
+	7209_01_mangos_spell_bonus_data.sql \
+	7214_01_mangos_command.sql \
+	7214_02_mangos_mangos_string.sql \
 	README
 
 ## Additional files to include when running 'make dist'
@@ -170,4 +240,74 @@ EXTRA_DIST = \
 	2008_12_22_17_mangos_item_template.sql \
 	2008_12_22_18_characters_characters.sql \
 	2008_12_22_19_characters_item_instance.sql \
+	6936_01_mangos_spell_chain.sql \
+	6939_01_mangos_quest_template.sql \
+	6940_01_mangos_spell_learn_spell.sql \
+	6941_01_mangos_spell_learn_spell.sql \
+	6944_01_mangos_mangos_string.sql \
+	6958_01_mangos_spell_proc_event.sql \
+	6960_01_mangos_command.sql \
+	6960_02_mangos_string.sql \
+	6961_01_mangos_command.sql \
+	6970_01_mangos_playercreateinfo.sql \
+	6976_01_realmd_realmd_db_version.sql \
+	6976_02_characters_character_db_version.sql \
+	7002_01_mangos_spell_chain.sql \
+	7015_01_mangos_item_template.sql \
+	7024_01_mangos_spell_chain.sql \
+	7026_01_mangos_battleground_template.sql \
+	7031_01_mangos_spell_proc_event.sql \
+	7033_01_mangos_spell_proc_event.sql \
+	7034_01_mangos_spell_proc_event.sql \
+	7040_01_mangos_achievement_reward.sql \
+	7044_01_mangos_spell_proc_event.sql \
+	7047_01_characters_character_spell.sql \
+	7047_02_mangos_playercreateinfo_action.sql \
+	7047_03_mangos_playercreateinfo_spell.sql \
+	7050_01_mangos_spell_proc_event.sql \
+	7051_01_mangos_spell_proc_event.sql \
+	7052_01_mangos_spell_proc_event.sql \
+	7053_01_mangos_spell_proc_event.sql \
+	7056_01_mangos_spell_proc_event.sql \
+	7059_01_characters_character_spell.sql \
+	7059_02_characters_pet_spell.sql \
+	7060_01_mangos_spell_proc_event.sql \
+	7061_01_mangos_spell_proc_event.sql \
+	7063_01_mangos_spell_proc_event.sql \
+	7067_01_mangos_playercreateinfo_spell.sql \
+	7067_02_mangos_spell_learn_spell.sql \
+	7067_03_characters_character_spell.sql \
+	7074_01_mangos_playercreateinfo_spell.sql \
+	7075_01_characters_character_spell.sql \
+	7075_02_mangos_spell_learn_spell.sql \
+	7077_01_characters_character_spell.sql \
+	7078_01_mangos_spell_proc_event.sql \
+	7092_01_mangos_player_xp_for_level.sql \
+	7097_01_mangos_spell_proc_event.sql \
+	7100_01_characters_character_spell.sql \
+	7107_01_mangos_string.sql \
+	7113_01_characters_character_achievement_progress.sql \
+	7118_01_mangos_skill_discovery_template.sql \
+	7133_01_mangos_skill_discovery_template.sql \
+	7133_02_mangos_spell_loot_template.sql \
+	7141_01_mangos_instance_template.sql \
+	7147_01_mangos_creature_template.sql \
+	7149_01_mangos_spell_proc_event.sql \
+	7150_01_mangos_playercreateinfo_spell.sql \
+	7156_01_mangos_spell_proc_event.sql \
+	7168_01_mangos_command.sql \
+	7175_01_mangos_spell_proc_event.sql \
+	7193_01_mangos_mangos_string.sql \
+	7196_01_mangos_spell_chain.sql \
+	7196_02_mangos_spell_bonus_data.sql \
+	7198_01_characters_characters.sql \
+	7199_01_mangos_spell_bonus_data.sql \
+	7199_02_mangos_spell_proc_event.sql \
+	7205_01_mangos_spell_chain.sql \
+	7207_01_mangos_creature.sql \
+	7207_02_mangos_gameobject.sql \
+	7207_03_characters_corpse.sql \
+	7209_01_mangos_spell_bonus_data.sql \
+	7214_01_mangos_command.sql \
+	7214_02_mangos_mangos_string.sql \
 	README

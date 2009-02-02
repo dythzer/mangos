@@ -21,7 +21,7 @@
 
 DROP TABLE IF EXISTS `character_db_version`;
 CREATE TABLE `character_db_version` (
-  `required_2008_12_22_19_characters_item_instance` bit(1) default NULL
+  `required_7207_03_characters_corpse` bit(1) default NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Last applied sql update to DB';
 
 --
@@ -626,7 +626,6 @@ DROP TABLE IF EXISTS `character_spell`;
 CREATE TABLE `character_spell` (
   `guid` int(11) unsigned NOT NULL default '0' COMMENT 'Global Unique Identifier',
   `spell` int(11) unsigned NOT NULL default '0' COMMENT 'Spell Identifier',
-  `slot` int(11) unsigned NOT NULL default '0',
   `active` tinyint(3) unsigned NOT NULL default '1',
   `disabled` tinyint(3) unsigned NOT NULL default '0',
   PRIMARY KEY  (`guid`,`spell`)
@@ -728,6 +727,7 @@ CREATE TABLE `corpse` (
   `orientation` float NOT NULL default '0',
   `zone` int(11) unsigned NOT NULL default '38' COMMENT 'Zone Identifier',
   `map` int(11) unsigned NOT NULL default '0' COMMENT 'Map Identifier',
+  `phaseMask` smallint(5) unsigned NOT NULL default '1',
   `data` longtext,
   `time` bigint(20) unsigned NOT NULL default '0',
   `corpse_type` tinyint(3) unsigned NOT NULL default '0',
@@ -1216,7 +1216,6 @@ DROP TABLE IF EXISTS `pet_spell`;
 CREATE TABLE `pet_spell` (
   `guid` int(11) unsigned NOT NULL default '0' COMMENT 'Global Unique Identifier',
   `spell` int(11) unsigned NOT NULL default '0' COMMENT 'Spell Identifier',
-  `slot` int(11) unsigned NOT NULL default '0',
   `active` int(11) unsigned NOT NULL default '0',
   PRIMARY KEY  (`guid`,`spell`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='Pet System';

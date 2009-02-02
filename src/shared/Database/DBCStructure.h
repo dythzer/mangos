@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -325,6 +325,12 @@ struct AchievementCriteriaEntry
             uint32  rollValue;                              // 3
             uint32  count;                                  // 4
         } roll_need_on_loot;
+       // ACHIEVEMENT_CRITERIA_TYPE_ROLL_GREED_ON_LOOT= 51
+        struct
+        {
+            uint32  rollValue;                              // 3
+            uint32  count;                                  // 4
+        } roll_greed_on_loot;
 
         // ACHIEVEMENT_CRITERIA_TYPE_HK_CLASS = 52
         struct
@@ -483,6 +489,12 @@ struct AreaTableEntry
     char*   area_name[16];                                  // 11-26
                                                             // 27, string flags, unused
     uint32  team;                                           // 28
+};
+
+struct AreaGroupEntry
+{
+    uint32  AreaGroupId;                                    // 0
+    uint32  AreaId[7];                                      // 1-7
 };
 
 struct AreaTriggerEntry
@@ -652,6 +664,14 @@ struct CreatureSpellDataEntry
     //uint32    availability[4];                            // 4-7      m_availability[4]
 };
 
+struct CreatureTypeEntry
+{
+    uint32    ID;                                           // 0        m_ID
+    //char*   Name[16];                                     // 1-16     name
+                                                            // 17       string flags
+    //uint32    no_expirience;                              // 18 no exp? critters, non-combat pets, gas cloud.
+};
+
 struct DurabilityCostsEntry
 {
     uint32    Itemlvl;                                      // 0
@@ -796,14 +816,14 @@ struct GtRegenMPPerSptEntry
 
 struct ItemEntry
 {
-   uint32   ID;
-   //uint32   Class;
-   //uint32   SubClass;
-   //uint32   Unk0;
-   //uint32   Material;
-   uint32   DisplayId;
-   uint32   InventoryType;
-   uint32   Sheath;
+   uint32   ID;                                             // 0
+   uint32   Class;                                          // 1
+   //uint32   SubClass;                                     // 2 some items have strnage subclasses
+   int32    Unk0;                                           // 3
+   int32    Material;                                       // 4
+   uint32   DisplayId;                                      // 5
+   uint32   InventoryType;                                  // 6
+   uint32   Sheath;                                         // 7
 };
 
 struct ItemDisplayInfoEntry
@@ -929,14 +949,16 @@ struct MapEntry
     bool IsBattleGround() const { return map_type == MAP_BATTLEGROUND; }
     bool IsBattleArena() const { return map_type == MAP_ARENA; }
     bool IsBattleGroundOrArena() const { return map_type == MAP_BATTLEGROUND || map_type == MAP_ARENA; }
-    bool SupportsHeroicMode() const { return resetTimeHeroic && !resetTimeRaid; }
+    bool SupportsHeroicMode() const { return resetTimeHeroic != 0; }
     bool HasResetTime() const { return resetTimeHeroic || resetTimeRaid; }
 
     bool IsMountAllowed() const
     {
         return !IsDungeon() ||
-            MapID==568 || MapID==309 || MapID==209 || MapID==534 ||
-            MapID==560 || MapID==509 || MapID==269;
+            MapID==209 || MapID==269 || MapID==309 ||       // TanarisInstance, CavernsOfTime, Zul'gurub
+            MapID==509 || MapID==534 || MapID==560 ||       // AhnQiraj, HyjalPast, HillsbradPast
+            MapID==568 || MapID==580 || MapID==615 ||       // ZulAman, Sunwell Plateau, Obsidian Sanctrum
+            MapID==616;                                     // Eye Of Eternity
     }
 
     bool IsContinent() const
@@ -1070,10 +1092,10 @@ struct SpellEntry
     uint32    TargetAuraState;                              // 18       m_targetAuraState
     uint32    CasterAuraStateNot;                           // 19       m_excludeCasterAuraState
     uint32    TargetAuraStateNot;                           // 20       m_excludeTargetAuraState
-    //uint32    casterAuraSpell;                            // 21       m_casterAuraSpell not used
-    //uint32    targetAuraSpell;                            // 22       m_targetAuraSpell not used
-    //uint32    excludeCasterAuraSpell;                     // 23       m_excludeCasterAuraSpell not used
-    //uint32    excludeTargetAuraSpell;                     // 24       m_excludeTargetAuraSpell not used
+    uint32    casterAuraSpell;                              // 21       m_casterAuraSpell
+    uint32    targetAuraSpell;                              // 22       m_targetAuraSpell
+    uint32    excludeCasterAuraSpell;                       // 23       m_excludeCasterAuraSpell
+    uint32    excludeTargetAuraSpell;                       // 24       m_excludeTargetAuraSpell
     uint32    CastingTimeIndex;                             // 25       m_castingTimeIndex
     uint32    RecoveryTime;                                 // 26       m_recoveryTime
     uint32    CategoryRecoveryTime;                         // 27       m_categoryRecoveryTime
@@ -1152,7 +1174,7 @@ struct SpellEntry
     //uint32    MinReputation;                              // 223      m_minReputation not used
     //uint32    RequiredAuraVision;                         // 224      m_requiredAuraVision not used
     uint32    TotemCategory[2];                             // 225-226  m_requiredTotemCategoryID
-    int32     AreaId;                                       // 227      m_requiredAreasID
+    int32     AreaGroupId;                                  // 227      m_requiredAreaGroupId
     uint32    SchoolMask;                                   // 228      m_schoolMask
     uint32    runeCostID;                                   // 229      m_runeCostID
     //uint32    spellMissileID;                             // 230      m_spellMissileID not used
@@ -1397,7 +1419,7 @@ struct VehicleEntry
     uint32  m_uiSeatIndicatorType;                          // 42
 };
 
-struct VehicleSeatEntry 
+struct VehicleSeatEntry
 {
     uint32  m_ID;                                           // 0
     uint32  m_flags;                                        // 1

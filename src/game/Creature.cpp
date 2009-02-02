@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -303,10 +303,8 @@ bool Creature::UpdateEntry(uint32 Entry, uint32 team, const CreatureData *data )
                 SetPvP(true);
     }
 
-    m_spells[0] = GetCreatureInfo()->spell1;
-    m_spells[1] = GetCreatureInfo()->spell2;
-    m_spells[2] = GetCreatureInfo()->spell3;
-    m_spells[3] = GetCreatureInfo()->spell4;
+    for(int i=0; i < CREATURE_MAX_SPELLS; ++i)
+        m_spells[i] = GetCreatureInfo()->spells[i];
 
     return true;
 }
@@ -530,10 +528,11 @@ bool Creature::AIM_Initialize()
     return true;
 }
 
-bool Creature::Create (uint32 guidlow, Map *map, uint32 Entry, uint32 team, const CreatureData *data)
+bool Creature::Create (uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, uint32 team, const CreatureData *data)
 {
     SetMapId(map->GetId());
     SetInstanceId(map->GetInstanceId());
+    SetPhaseMask(phaseMask,false);
 
     //oX = x;     oY = y;    dX = x;    dY = y;    m_moveTime = 0;    m_startMove = 0;
     const bool bResult = CreateFromProto(guidlow, Entry, team, data);
@@ -813,10 +812,8 @@ void Creature::sendPreparedGossip(Player* player)
     if(!player)
         return;
 
-    GossipMenu& gossipmenu = player->PlayerTalkClass->GetGossipMenu();
-
     // in case empty gossip menu open quest menu if any
-    if (gossipmenu.Empty() && GetNpcTextId() == 0)
+    if (player->PlayerTalkClass->GetGossipMenu().Empty() && !player->PlayerTalkClass->GetQuestMenu().Empty())
     {
         player->SendPreparedQuest(GetGUID());
         return;
@@ -1065,10 +1062,10 @@ void Creature::SaveToDB()
         return;
     }
 
-    SaveToDB(GetMapId(), data->spawnMask);
+    SaveToDB(GetMapId(), data->spawnMask,GetPhaseMask());
 }
 
-void Creature::SaveToDB(uint32 mapid, uint8 spawnMask)
+void Creature::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
 {
     // update in loaded data
     if (!m_DBTableGuid)
@@ -1100,6 +1097,7 @@ void Creature::SaveToDB(uint32 mapid, uint8 spawnMask)
     // data->guid = guid don't must be update at save
     data.id = GetEntry();
     data.mapid = mapid;
+    data.phaseMask = phaseMask;
     data.displayid = displayId;
     data.equipmentId = GetEquipmentId();
     data.posX = GetPositionX();
@@ -1129,6 +1127,7 @@ void Creature::SaveToDB(uint32 mapid, uint8 spawnMask)
         << GetEntry() << ","
         << mapid <<","
         << (uint32)spawnMask << ","
+        << (uint32)GetPhaseMask() << ","
         << displayId <<","
         << GetEquipmentId() <<","
         << GetPositionX() << ","
@@ -1293,7 +1292,7 @@ bool Creature::LoadFromDB(uint32 guid, Map *map)
     if (map->GetInstanceId() != 0) guid = objmgr.GenerateLowGuid(HIGHGUID_UNIT);
 
     uint16 team = 0;
-    if(!Create(guid,map,data->id,team,data))
+    if(!Create(guid,map,data->phaseMask,data->id,team,data))
         return false;
 
     Relocate(data->posX,data->posY,data->posZ,data->orientation);
@@ -1536,7 +1535,7 @@ void Creature::Respawn()
     }
 }
 
-bool Creature::IsImmunedToSpell(SpellEntry const* spellInfo, bool useCharges)
+bool Creature::IsImmunedToSpell(SpellEntry const* spellInfo)
 {
     if (!spellInfo)
         return false;
@@ -1544,15 +1543,15 @@ bool Creature::IsImmunedToSpell(SpellEntry const* spellInfo, bool useCharges)
     if (GetCreatureInfo()->MechanicImmuneMask & (1 << (spellInfo->Mechanic - 1)))
         return true;
 
-    return Unit::IsImmunedToSpell(spellInfo, useCharges);
+    return Unit::IsImmunedToSpell(spellInfo);
 }
 
-bool Creature::IsImmunedToSpellEffect(uint32 effect, uint32 mechanic) const
+bool Creature::IsImmunedToSpellEffect(SpellEntry const* spellInfo, uint32 index) const
 {
-    if (GetCreatureInfo()->MechanicImmuneMask & (1 << (mechanic-1)))
+    if (GetCreatureInfo()->MechanicImmuneMask & (1 << (spellInfo->EffectMechanic[index] - 1)))
         return true;
 
-    return Unit::IsImmunedToSpellEffect(effect, mechanic);
+    return Unit::IsImmunedToSpellEffect(spellInfo, index);
 }
 
 SpellEntry const *Creature::reachWithSpellAttack(Unit *pVictim)
@@ -1596,7 +1595,9 @@ SpellEntry const *Creature::reachWithSpellAttack(Unit *pVictim)
         //    continue;
         if( dist > range || dist < minrange )
             continue;
-        if(HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_SILENCED))
+        if(spellInfo->PreventionType == SPELL_PREVENTION_TYPE_SILENCE && HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_SILENCED))
+            continue;
+        if(spellInfo->PreventionType == SPELL_PREVENTION_TYPE_PACIFY && HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED))
             continue;
         return spellInfo;
     }
@@ -1640,7 +1641,9 @@ SpellEntry const *Creature::reachWithSpellCure(Unit *pVictim)
         //    continue;
         if( dist > range || dist < minrange )
             continue;
-        if(HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_SILENCED))
+        if(spellInfo->PreventionType == SPELL_PREVENTION_TYPE_SILENCE && HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_SILENCED))
+            continue;
+        if(spellInfo->PreventionType == SPELL_PREVENTION_TYPE_PACIFY && HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED))
             continue;
         return spellInfo;
     }
@@ -1699,7 +1702,7 @@ void Creature::CallAssistance()
                 cell.SetNoCreate();
 
                 MaNGOS::AnyAssistCreatureInRangeCheck u_check(this, getVictim(), radius);
-                MaNGOS::CreatureListSearcher<MaNGOS::AnyAssistCreatureInRangeCheck> searcher(assistList, u_check);
+                MaNGOS::CreatureListSearcher<MaNGOS::AnyAssistCreatureInRangeCheck> searcher(this, assistList, u_check);
 
                 TypeContainerVisitor<MaNGOS::CreatureListSearcher<MaNGOS::AnyAssistCreatureInRangeCheck>, GridTypeMapContainer >  grid_creature_searcher(searcher);
 

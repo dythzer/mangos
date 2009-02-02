@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -74,6 +74,12 @@ enum ItemSpelltriggerType
     ITEM_SPELLTRIGGER_ON_EQUIP        = 1,
     ITEM_SPELLTRIGGER_CHANCE_ON_HIT   = 2,
     ITEM_SPELLTRIGGER_SOULSTONE       = 4,
+    /*
+     * ItemSpelltriggerType 5 might have changed on 2.4.3/3.0.3: Such auras
+     * will be applied on item pickup and removed on item loss - maybe on the
+     * other hand the item is destroyed if the aura is removed ("removed on
+     * death" of spell 57348 makes me think so)
+     */
     ITEM_SPELLTRIGGER_ON_NO_DELAY_USE = 5,                  // no equip cooldown
     ITEM_SPELLTRIGGER_LEARN_SPELL_ID  = 6                   // used in item_template.spell_2 with spell_id with SPELL_GENERIC_LEARN in spell_1
 };
@@ -489,7 +495,7 @@ struct ItemPrototype
     uint32 ItemId;
     uint32 Class;                                           // id from ItemClass.dbc
     uint32 SubClass;                                        // id from ItemSubClass.dbc
-    uint32 Unk0;
+    int32  Unk0;
     char*  Name1;
     uint32 DisplayInfoID;                                   // id from ItemDisplayInfo.dbc
     uint32 Quality;
@@ -509,8 +515,8 @@ struct ItemPrototype
     uint32 RequiredCityRank;
     uint32 RequiredReputationFaction;                       // id from Faction.dbc
     uint32 RequiredReputationRank;
-    uint32 MaxCount;
-    uint32 Stackable;
+    int32  MaxCount;                                        // <=0: no limit
+    int32  Stackable;                                       // 0: not allowed, -1: put in player coin info tab and don't limit stacking (so 1 slot)
     uint32 ContainerSlots;
     uint32 StatsCount;
     _ItemStat ItemStat[10];
@@ -535,7 +541,7 @@ struct ItemPrototype
     uint32 PageMaterial;
     uint32 StartQuest;                                      // id from QuestCache.wdb
     uint32 LockID;
-    uint32 Material;                                        // id from Material.dbc
+    int32  Material;                                        // id from Material.dbc
     uint32 Sheath;
     uint32 RandomProperty;                                  // id from ItemRandomProperties.dbc
     uint32 RandomSuffix;                                    // id from ItemRandomSuffix.dbc
@@ -619,6 +625,8 @@ struct ItemPrototype
 
         return 0;
     }
+
+    uint32 GetMaxStackSize() const { return Stackable > 0 ? uint32(Stackable) : uint32(0x7FFFFFFF-1); }
 };
 
 struct ItemLocale

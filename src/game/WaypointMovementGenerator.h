@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ class MANGOS_DLL_SPEC PathMovementBase
         PathMovementBase() : i_currentNode(0) {}
         virtual ~PathMovementBase() {};
 
-        inline bool MovementInProgress(void) const { return i_currentNode < i_path.Size(); }
+        bool MovementInProgress(void) const { return i_currentNode < i_path.Size(); }
 
         // template pattern, not defined .. override required
         void LoadPath(T &);
@@ -135,7 +135,7 @@ public PathMovementBase<Player>
 
         Path& GetPath() { return i_path; }
         uint32 GetPathAtMapEnd() const;
-        inline bool HasArrived() const { return (i_currentNode >= i_path.Size()); }
+        bool HasArrived() const { return (i_currentNode >= i_path.Size()); }
         void SetCurrentNodeAfterTeleport();
         void SkipCurrentNode() { ++i_currentNode; }
 };

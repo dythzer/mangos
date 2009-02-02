@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -507,7 +507,7 @@ void Map::MessageBroadcast(WorldObject *obj, WorldPacket *msg)
     if( !loaded(GridPair(cell.data.Part.grid_x, cell.data.Part.grid_y)) )
         return;
 
-    MaNGOS::ObjectMessageDeliverer post_man(msg);
+    MaNGOS::ObjectMessageDeliverer post_man(*obj,msg);
     TypeContainerVisitor<MaNGOS::ObjectMessageDeliverer, WorldTypeMapContainer > message(post_man);
     CellLock<ReadGuard> cell_lock(cell, p);
     cell_lock->Visit(cell_lock, message, *this);
@@ -1076,7 +1076,7 @@ float Map::GetHeight(float x, float y, float z, bool pUseVmaps) const
     }
 }
 
-uint16 Map::GetAreaFlag(float x, float y ) const
+uint16 Map::GetAreaFlag(float x, float y, float z) const
 {
     //local x,y coords
     float lx,ly;
@@ -1094,11 +1094,30 @@ uint16 Map::GetAreaFlag(float x, float y ) const
     // ensure GridMap is loaded
     const_cast<Map*>(this)->EnsureGridCreated(GridPair(63-gx,63-gy));
 
+    uint16 areaflag;
     if(GridMaps[gx][gy])
-        return GridMaps[gx][gy]->area_flag[(int)(lx)][(int)(ly)];
+        areaflag = GridMaps[gx][gy]->area_flag[(int)(lx)][(int)(ly)];
     // this used while not all *.map files generated (instances)
     else
-        return GetAreaFlagByMapId(i_id);
+        areaflag = GetAreaFlagByMapId(i_id);
+
+    //FIXME: some hacks for areas above or underground for ground area
+    //       required for area specific spells/etc, until map/vmap data
+    //       not provided correct areaflag with this hacks
+    switch(areaflag)
+    {
+        // Acherus: The Ebon Hold (Plaguelands: The Scarlet Enclave)
+        case 1984:                                          // Plaguelands: The Scarlet Enclave
+        case 2076:                                          // Death's Breach (Plaguelands: The Scarlet Enclave)
+        case 2745:                                          // The Noxious Pass (Plaguelands: The Scarlet Enclave)
+            if(z > 350.0f) areaflag = 2048; break;
+        // Acherus: The Ebon Hold (Eastern Plaguelands)
+        case 856:                                           // The Noxious Glade (Eastern Plaguelands)
+        case 2456:                                          // Death's Breach (Eastern Plaguelands)
+            if(z > 350.0f) areaflag = 1950; break;
+    }
+
+    return areaflag;
 }
 
 uint8 Map::GetTerrainType(float x, float y ) const
@@ -1429,14 +1448,6 @@ void Map::RemoveAllObjectsInRemoveList()
     //sLog.outDebug("Object remover 2 check.");
 }
 
-bool Map::CanUnload(const uint32 &diff)
-{
-    if(!m_unloadTimer) return false;
-    if(m_unloadTimer < diff) return true;
-    m_unloadTimer -= diff;
-    return false;
-}
-
 uint32 Map::GetPlayersCountExceptGMs() const
 {
     uint32 count = 0;
@@ -1517,10 +1528,10 @@ bool InstanceMap::CanEnter(Player *player)
     }
 
     // cannot enter if the instance is full (player cap), GMs don't count
-    InstanceTemplate const* iTemplate = objmgr.GetInstanceTemplate(GetId());
-    if (!player->isGameMaster() && GetPlayersCountExceptGMs() >= iTemplate->maxPlayers)
+    uint32 maxPlayers = GetMaxPlayers();
+    if (!player->isGameMaster() && GetPlayersCountExceptGMs() >= maxPlayers)
     {
-        sLog.outDetail("MAP: Instance '%u' of map '%s' cannot have more than '%u' players. Player '%s' rejected", GetInstanceId(), GetMapName(), iTemplate->maxPlayers, player->GetName());
+        sLog.outDetail("MAP: Instance '%u' of map '%s' cannot have more than '%u' players. Player '%s' rejected", GetInstanceId(), GetMapName(), maxPlayers, player->GetName());
         player->SendTransferAborted(GetId(), TRANSFER_ABORT_MAX_PLAYERS);
         return false;
     }
@@ -1811,6 +1822,14 @@ void InstanceMap::SetResetSchedule(bool on)
         if(!save) sLog.outError("InstanceMap::SetResetSchedule: cannot turn schedule %s, no save available for instance %d of %d", on ? "on" : "off", GetInstanceId(), GetId());
         else sInstanceSaveManager.ScheduleReset(on, save->GetResetTime(), InstanceSaveManager::InstResetEvent(0, GetId(), GetInstanceId()));
     }
+}
+
+uint32 InstanceMap::GetMaxPlayers() const
+{
+    InstanceTemplate const* iTemplate = objmgr.GetInstanceTemplate(GetId());
+    if(!iTemplate)
+        return 0;
+    return IsHeroic() ? iTemplate->maxPlayersHeroic : iTemplate->maxPlayers;
 }
 
 /* ******* Battleground Instance Maps ******* */
