@@ -1,4 +1,4 @@
-# Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+# Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,6 +30,8 @@ noinst_LIBRARIES = libmangosgame.a
 libmangosgame_a_SOURCES = \
     AccountMgr.cpp \
     AccountMgr.h \
+    AchievementMgr.h \
+    AchievementMgr.cpp \
     AddonHandler.cpp \
     AddonHandler.h \
     AggressorAI.cpp \
@@ -47,22 +49,31 @@ libmangosgame_a_SOURCES = \
     BattleGroundAB.cpp \
     BattleGroundAV.cpp \
     BattleGroundBE.cpp \
+    BattleGroundDS.cpp \
     BattleGroundEY.cpp \
     BattleGroundNA.cpp \
     BattleGroundRL.cpp \
+    BattleGroundRV.cpp \
+    BattleGroundSA.cpp \
     BattleGroundWS.cpp \
     BattleGround.h \
     BattleGroundAA.h \
     BattleGroundAB.h \
     BattleGroundAV.h \
     BattleGroundBE.h \
+    BattleGroundDS.h \
     BattleGroundEY.h \
     BattleGroundNA.h \
     BattleGroundRL.h \
+    BattleGroundRV.h \
+    BattleGroundSA.h \
     BattleGroundWS.h \
     BattleGroundHandler.cpp \
     BattleGroundMgr.cpp \
     BattleGroundMgr.h \
+    Calendar.cpp \
+    Calendar.h \
+    CalendarHandler.cpp \
     Cell.h \
     CellImpl.h \
     Channel.cpp \
@@ -227,8 +238,6 @@ libmangosgame_a_SOURCES = \
     TaxiHandler.cpp \
     TemporarySummon.cpp \
     TemporarySummon.h \
-    tools.cpp \
-    Tools.h \
     TotemAI.cpp \
     TotemAI.h \
     Totem.cpp \
@@ -246,6 +255,8 @@ libmangosgame_a_SOURCES = \
     UpdateData.h \
     UpdateFields.h \
     UpdateMask.h \
+    Vehicle.cpp \
+    Vehicle.h \
     VoiceChatHandler.cpp \
     WaypointManager.cpp \
     WaypointManager.h \

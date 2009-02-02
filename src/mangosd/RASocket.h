@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ class RASocket: public TcpSocket
         bool bLog;
         bool bSecure;                                       //kick on wrong pass, non exist. user, user with no priv
         //will protect from DOS, bruteforce attacks
-        //some 'smart' protection must be added for more scurity
+        //some 'smart' protection must be added for more security
         uint8 iMinLevel;
         enum
         {

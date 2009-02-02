@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,12 +15,3 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#ifndef MANGOS_TOOLS_H
-#define MANGOS_TOOLS_H
-
-#include "Common.h"
-#include "WorldPacket.h"
-
-bool readGUID(WorldPacket & data, uint64& guid);
-void    writeGUID(WorldPacket & data, uint64 & guid);
-#endif

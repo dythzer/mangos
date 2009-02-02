@@ -138,7 +138,7 @@ int DOTCONFDocument::cleanupLine(char * line)
             quoted = !quoted;
             ++line; continue;
         }
-        if(isspace(*line) && !quoted){
+        if(isspace((unsigned char)*line) && !quoted){
             *bg++ = 0;
             if(strlen(start)){
 
@@ -154,7 +154,7 @@ int DOTCONFDocument::cleanupLine(char * line)
                 words.push_back(word);
             }
             start = bg;
-            while(isspace(*++line)) {}
+            while(isspace((unsigned char)*++line)) {}
 
             continue;
         }
@@ -340,6 +340,11 @@ int DOTCONFDocument::setContent(const char * _fileName)
         error(0, NULL, "failed to open file '%s': %s", fileName, strerror(errno));
         return -1;
     }
+    // Try read utf8 header and skip it if exist
+    uint32 utf8header = 0;
+    fgets((char*)&utf8header, 4, file); // Try read header
+    if (utf8header!=0x00BFBBEF)         // If not exist
+        fseek(file, 0, SEEK_SET);       // Reset read position
 
     ret = parseFile();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@ void MapInstanced::Update(const uint32& t)
 
 void MapInstanced::MoveAllCreaturesInMoveList()
 {
-    for (InstancedMaps::iterator i = m_InstancedMaps.begin(); i != m_InstancedMaps.end(); i++)
+    for (InstancedMaps::iterator i = m_InstancedMaps.begin(); i != m_InstancedMaps.end(); ++i)
     {
         i->second->MoveAllCreaturesInMoveList();
     }
@@ -67,7 +67,7 @@ void MapInstanced::MoveAllCreaturesInMoveList()
 
 void MapInstanced::RemoveAllObjectsInRemoveList()
 {
-    for (InstancedMaps::iterator i = m_InstancedMaps.begin(); i != m_InstancedMaps.end(); i++)
+    for (InstancedMaps::iterator i = m_InstancedMaps.begin(); i != m_InstancedMaps.end(); ++i)
     {
         i->second->RemoveAllObjectsInRemoveList();
     }
@@ -79,7 +79,7 @@ bool MapInstanced::RemoveBones(uint64 guid, float x, float y)
 {
     bool remove_result = false;
 
-    for (InstancedMaps::iterator i = m_InstancedMaps.begin(); i != m_InstancedMaps.end(); i++)
+    for (InstancedMaps::iterator i = m_InstancedMaps.begin(); i != m_InstancedMaps.end(); ++i)
     {
         remove_result = remove_result || i->second->RemoveBones(guid, x, y);
     }
@@ -90,11 +90,11 @@ bool MapInstanced::RemoveBones(uint64 guid, float x, float y)
 void MapInstanced::UnloadAll(bool pForce)
 {
     // Unload instanced maps
-    for (InstancedMaps::iterator i = m_InstancedMaps.begin(); i != m_InstancedMaps.end(); i++)
+    for (InstancedMaps::iterator i = m_InstancedMaps.begin(); i != m_InstancedMaps.end(); ++i)
         i->second->UnloadAll(pForce);
 
     // Delete the maps only after everything is unloaded to prevent crashes
-    for (InstancedMaps::iterator i = m_InstancedMaps.begin(); i != m_InstancedMaps.end(); i++)
+    for (InstancedMaps::iterator i = m_InstancedMaps.begin(); i != m_InstancedMaps.end(); ++i)
         delete i->second;
 
     m_InstancedMaps.clear();
@@ -141,7 +141,17 @@ Map* MapInstanced::GetInstance(const WorldObject* obj)
             uint32 NewInstanceId = 0;                       // instanceId of the resulting map
             Player* player = (Player*)obj;
 
-            // TODO: battlegrounds and arenas
+            if(IsBattleGroundOrArena())
+            {
+                // instantiate or find existing bg map for player
+                // the instance id is set in battlegroundid
+                NewInstanceId = player->GetBattleGroundId();
+                assert(NewInstanceId);
+                map = _FindMap(NewInstanceId);
+                if(!map)
+                    map = CreateBattleGround(NewInstanceId);
+                return map;
+            }
 
             InstancePlayerBind *pBind = player->GetBoundInstance(GetId(), player->GetDifficulty());
             InstanceSave *pSave = pBind ? pBind->save : NULL;

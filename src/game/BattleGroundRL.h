@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,13 +24,17 @@ enum BattleGroundRLObjectTypes
 {
     BG_RL_OBJECT_DOOR_1         = 0,
     BG_RL_OBJECT_DOOR_2         = 1,
-    BG_RL_OBJECT_MAX            = 2
+    BG_RL_OBJECT_BUFF_1         = 2,
+    BG_RL_OBJECT_BUFF_2         = 3,
+    BG_RL_OBJECT_MAX            = 4
 };
 
 enum BattleGroundRLObjects
 {
     BG_RL_OBJECT_TYPE_DOOR_1    = 185918,
-    BG_RL_OBJECT_TYPE_DOOR_2    = 185917
+    BG_RL_OBJECT_TYPE_DOOR_2    = 185917,
+    BG_RL_OBJECT_TYPE_BUFF_1    = 184663,
+    BG_RL_OBJECT_TYPE_BUFF_2    = 184664
 };
 
 class BattleGroundRLScore : public BattleGroundScore
@@ -48,7 +52,7 @@ class BattleGroundRL : public BattleGround
     public:
         BattleGroundRL();
         ~BattleGroundRL();
-        void Update(time_t diff);
+        void Update(uint32 diff);
 
         /* inherited from BattlegroundClass */
         virtual void AddPlayer(Player *plr);
@@ -57,9 +61,8 @@ class BattleGroundRL : public BattleGround
         void HandleAreaTrigger(Player *Source, uint32 Trigger);
         bool SetupBattleGround();
         virtual void ResetBGSubclass();
+        virtual void FillInitialWorldStates(WorldPacket &d);
         void HandleKillPlayer(Player* player, Player *killer);
-
-    private:
-        uint32 m_TeamKills[2];                              // count of kills for each team
+        bool HandlePlayerUnderMap(Player * plr);
 };
 #endif

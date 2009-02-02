@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ BattleGroundWS::~BattleGroundWS()
 {
 }
 
-void BattleGroundWS::Update(time_t diff)
+void BattleGroundWS::Update(uint32 diff)
 {
     BattleGround::Update(diff);
 
@@ -48,6 +48,16 @@ void BattleGroundWS::Update(time_t diff)
         if(!(m_Events & 0x01))
         {
             m_Events |= 0x01;
+
+            // setup here, only when at least one player has ported to the map
+            if(!SetupBattleGround())
+            {
+                EndNow();
+                return;
+            }
+
+//            for(uint32 i = WS_SPIRIT_MAIN_ALLIANCE; i <= WS_SPIRIT_MAIN_HORDE; i++)
+//                SpawnBGCreature(i, RESPAWN_IMMEDIATELY);
 
             for(uint32 i = BG_WS_OBJECT_DOOR_A_1; i <= BG_WS_OBJECT_DOOR_H_4; i++)
             {
@@ -285,7 +295,32 @@ void BattleGroundWS::EventPlayerCapturedFlag(Player *Source)
 
 void BattleGroundWS::EventPlayerDroppedFlag(Player *Source)
 {
-    // Drop allowed in any BG state
+    if(GetStatus() != STATUS_IN_PROGRESS)
+    {
+        // if not running, do not cast things at the dropper player (prevent spawning the "dropped" flag), neither send unnecessary messages
+        // just take off the aura
+        if(Source->GetTeam() == ALLIANCE)
+        {
+            if(!this->IsHordeFlagPickedup())
+                return;
+            if(GetHordeFlagPickerGUID() == Source->GetGUID())
+            {
+                SetHordeFlagPicker(0);
+                Source->RemoveAurasDueToSpell(BG_WS_SPELL_WARSONG_FLAG);
+            }
+        }
+        else
+        {
+            if(!this->IsAllianceFlagPickedup())
+                return;
+            if(GetAllianceFlagPickerGUID() == Source->GetGUID())
+            {
+                SetAllianceFlagPicker(0);
+                Source->RemoveAurasDueToSpell(BG_WS_SPELL_SILVERWING_FLAG);
+            }
+        }
+        return;
+    }
 
     const char *message = "";
     uint8 type = 0;

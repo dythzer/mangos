@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ BattleGroundAB::~BattleGroundAB()
 {
 }
 
-void BattleGroundAB::Update(time_t diff)
+void BattleGroundAB::Update(uint32 diff)
 {
     BattleGround::Update(diff);
 
@@ -49,6 +49,13 @@ void BattleGroundAB::Update(time_t diff)
         if( !(m_Events & 0x01) )
         {
             m_Events |= 0x01;
+
+            // setup here, only when at least one player has ported to the map
+            if(!SetupBattleGround())
+            {
+                EndNow();
+                return;
+            }
 
             sLog.outDebug("Arathi Basin: entering state STATUS_WAIT_JOIN ...");
 
@@ -377,6 +384,7 @@ void BattleGroundAB::_NodeOccupied(uint8 node,Team team)
 {
    if( !AddSpiritGuide(node, BG_AB_SpiritGuidePos[node][0], BG_AB_SpiritGuidePos[node][1], BG_AB_SpiritGuidePos[node][2], BG_AB_SpiritGuidePos[node][3], team) )
         sLog.outError("Failed to spawn spirit guide! point: %u, team: %u,", node, team);
+//   SpawnBGCreature(node,RESPAWN_IMMEDIATELY);
 
     uint8 capturedNodes = 0;
     for (uint8 i = 0; i < BG_AB_DYNAMIC_NODES_COUNT; ++i)
@@ -401,9 +409,9 @@ void BattleGroundAB::_NodeDeOccupied(uint8 node)
     {
         WorldSafeLocsEntry const *ClosestGrave = NULL;
         Player *plr;
-        for (std::vector<uint64>::iterator itr = ghost_list.begin(); itr != ghost_list.end(); ++itr)
+        for (std::vector<uint64>::const_iterator itr = ghost_list.begin(); itr != ghost_list.end(); ++itr)
         {
-            plr = objmgr.GetPlayer(*ghost_list.begin());
+            plr = objmgr.GetPlayer(*itr);
             if( !plr )
                 continue;
             if( !ClosestGrave )

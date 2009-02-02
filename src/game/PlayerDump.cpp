@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -337,7 +337,7 @@ std::string PlayerDumpWriter::GetDump(uint32 guid)
     return dump;
 }
 
-DumpReturn PlayerDumpWriter::WriteDump(std::string file, uint32 guid)
+DumpReturn PlayerDumpWriter::WriteDump(const std::string& file, uint32 guid)
 {
     FILE *fout = fopen(file.c_str(), "w");
     if (!fout)
@@ -353,7 +353,7 @@ DumpReturn PlayerDumpWriter::WriteDump(std::string file, uint32 guid)
 // Reading - High-level functions
 #define ROLLBACK(DR) {CharacterDatabase.RollbackTransaction(); fclose(fin); return (DR);}
 
-DumpReturn PlayerDumpReader::LoadDump(std::string file, uint32 account, std::string name, uint32 guid)
+DumpReturn PlayerDumpReader::LoadDump(const std::string& file, uint32 account, std::string name, uint32 guid)
 {
     // check character count
     {

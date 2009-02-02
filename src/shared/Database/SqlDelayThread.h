@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ class SqlDelayThread : public ZThread::Runnable
         SqlDelayThread(Database* db);
 
         ///< Put sql statement to delay queue
-        inline void Delay(SqlOperation* sql) { m_sqlQueue.add(sql); }
+        bool Delay(SqlOperation* sql) { m_sqlQueue.add(sql); return true; }
 
         virtual void Stop();                                ///< Stop event
         virtual void run();                                 ///< Main Thread loop

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -134,7 +134,7 @@ VisibleNotifier::Notify()
     // send data at target visibility change (adding to client)
     for(std::set<WorldObject*>::const_iterator vItr = i_visibleNow.begin(); vItr != i_visibleNow.end(); ++vItr)
         if((*vItr)!=&i_player && (*vItr)->isType(TYPEMASK_UNIT))
-            i_player.SendAuraDurationsForTarget((Unit*)(*vItr));
+            i_player.SendAurasForTarget((Unit*)(*vItr));
 }
 
 void
@@ -142,8 +142,11 @@ MessageDeliverer::Visit(PlayerMapType &m)
 {
     for(PlayerMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
     {
-        if( i_toSelf || iter->getSource() != &i_player)
+        if (i_toSelf || iter->getSource() != &i_player)
         {
+            if (!i_player.InSamePhase(iter->getSource()))
+                continue;
+
             if(WorldSession* session = iter->getSource()->GetSession())
                 session->SendPacket(i_message);
         }
@@ -155,6 +158,9 @@ ObjectMessageDeliverer::Visit(PlayerMapType &m)
 {
     for(PlayerMapType::iterator iter=m.begin(); iter != m.end(); ++iter)
     {
+        if(!iter->getSource()->InSamePhase(i_phaseMask))
+            continue;
+
         if(WorldSession* session = iter->getSource()->GetSession())
             session->SendPacket(i_message);
     }
@@ -169,6 +175,9 @@ MessageDistDeliverer::Visit(PlayerMapType &m)
             (!i_ownTeamOnly || iter->getSource()->GetTeam() == i_player.GetTeam() ) &&
             (!i_dist || iter->getSource()->GetDistance(&i_player) <= i_dist) )
         {
+            if (!i_player.InSamePhase(iter->getSource()))
+                continue;
+
             if(WorldSession* session = iter->getSource()->GetSession())
                 session->SendPacket(i_message);
         }
@@ -182,6 +191,9 @@ ObjectMessageDistDeliverer::Visit(PlayerMapType &m)
     {
         if( !i_dist || iter->getSource()->GetDistance(&i_object) <= i_dist )
         {
+            if( !i_object.InSamePhase(iter->getSource()))
+                continue;
+
             if(WorldSession* session = iter->getSource()->GetSession())
                 session->SendPacket(i_message);
         }
@@ -196,9 +208,6 @@ ObjectUpdater::Visit(GridRefManager<T> &m)
         iter->getSource()->Update(i_timeDiff);
     }
 }
-
-template void ObjectUpdater::Visit<GameObject>(GameObjectMapType &);
-template void ObjectUpdater::Visit<DynamicObject>(DynamicObjectMapType &);
 
 bool CannibalizeObjectCheck::operator()(Corpse* u)
 {
@@ -216,3 +225,6 @@ bool CannibalizeObjectCheck::operator()(Corpse* u)
 
     return false;
 }
+
+template void ObjectUpdater::Visit<GameObject>(GameObjectMapType &);
+template void ObjectUpdater::Visit<DynamicObject>(DynamicObjectMapType &);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -128,10 +128,9 @@ void Totem::UnSummon()
 
 void Totem::SetOwner(uint64 guid)
 {
-    SetUInt64Value(UNIT_FIELD_SUMMONEDBY, guid);
-    SetUInt64Value(UNIT_FIELD_CREATEDBY, guid);
-    Unit *owner = GetOwner();
-    if (owner)
+    SetCreatorGUID(guid);
+    SetOwnerGUID(guid);
+    if (Unit *owner = GetOwner())
     {
         setFaction(owner->getFaction());
         SetLevel(owner->getLevel());
@@ -160,18 +159,18 @@ void Totem::SetTypeBySummonSpell(SpellEntry const * spellProto)
         m_type = TOTEM_STATUE;                              //Jewelery statue
 }
 
-bool Totem::IsImmunedToSpell(SpellEntry const* spellInfo, bool useCharges)
+bool Totem::IsImmunedToSpellEffect(SpellEntry const* spellInfo, uint32 index) const
 {
-    for (int i=0;i<3;i++)
+    // TODO: possibly all negative auras immuned?
+    switch(spellInfo->EffectApplyAuraName[index])
     {
-        switch(spellInfo->EffectApplyAuraName[i])
-        {
-            case SPELL_AURA_PERIODIC_DAMAGE:
-            case SPELL_AURA_PERIODIC_LEECH:
-                return true;
-            default:
-                continue;
-        }
+        case SPELL_AURA_PERIODIC_DAMAGE:
+        case SPELL_AURA_PERIODIC_LEECH:
+        case SPELL_AURA_MOD_FEAR:
+        case SPELL_AURA_TRANSFORM:
+            return true;
+        default:
+            break;
     }
-    return Creature::IsImmunedToSpell(spellInfo, useCharges);
+    return Creature::IsImmunedToSpellEffect(spellInfo, index);
 }

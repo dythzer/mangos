@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -91,13 +91,13 @@ struct MANGOS_DLL_DECL Cell
         y = data.Part.grid_y*MAX_NUMBER_OF_CELLS + data.Part.cell_y;
     }
 
-    inline bool DiffCell(const Cell &cell) const
+    bool DiffCell(const Cell &cell) const
     {
         return( data.Part.cell_x != cell.data.Part.cell_x ||
             data.Part.cell_y != cell.data.Part.cell_y );
     }
 
-    inline bool DiffGrid(const Cell &cell) const
+    bool DiffGrid(const Cell &cell) const
     {
         return( data.Part.grid_x != cell.data.Part.grid_x ||
             data.Part.grid_y != cell.data.Part.grid_y );

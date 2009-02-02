@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -75,7 +75,7 @@ struct LootStoreItem
         group(_group), maxcount(_maxcount), conditionId(_conditionId),
         needs_quest(_chanceOrQuestChance < 0) {}
 
-    bool Roll() const;                                      // Checks if the entry takes it's chance (at loot generation)
+    bool Roll(bool rate) const;                             // Checks if the entry takes it's chance (at loot generation)
     bool IsValid(LootStore const& store, uint32 entry) const;
                                                             // Checks correctness of values
 };
@@ -127,7 +127,8 @@ typedef std::set<uint32> LootIdSet;
 class LootStore
 {
     public:
-        explicit LootStore(char const* name, char const* entryName) : m_name(name), m_entryName(entryName) {}
+        explicit LootStore(char const* name, char const* entryName, bool ratesAllowed)
+            : m_name(name), m_entryName(entryName), m_ratesAllowed(ratesAllowed) {}
         virtual ~LootStore() { Clear(); }
 
         void Verify() const;
@@ -145,6 +146,7 @@ class LootStore
 
         char const* GetName() const { return m_name; }
         char const* GetEntryName() const { return m_entryName; }
+        bool IsRatesAllowed() const { return m_ratesAllowed; }
     protected:
         void LoadLootTable();
         void Clear();
@@ -152,6 +154,7 @@ class LootStore
         LootTemplateMap m_LootTemplates;
         char const* m_name;
         char const* m_entryName;
+        bool m_ratesAllowed;
 };
 
 class LootTemplate
@@ -163,7 +166,7 @@ class LootTemplate
         // Adds an entry to the group (at loading stage)
         void AddEntry(LootStoreItem& item);
         // Rolls for every item in the template and adds the rolled items the the loot
-        void Process(Loot& loot, LootStore const& store, uint8 GroupId = 0) const;
+        void Process(Loot& loot, LootStore const& store, bool rate, uint8 GroupId = 0) const;
 
         // True if template includes at least 1 quest drop entry
         bool HasQuestDrop(LootTemplateMap const& store, uint8 GroupId = 0) const;
@@ -295,21 +298,26 @@ extern LootStore LootTemplates_Creature;
 extern LootStore LootTemplates_Fishing;
 extern LootStore LootTemplates_Gameobject;
 extern LootStore LootTemplates_Item;
+extern LootStore LootTemplates_Milling;
 extern LootStore LootTemplates_Pickpocketing;
 extern LootStore LootTemplates_Skinning;
 extern LootStore LootTemplates_Disenchant;
 extern LootStore LootTemplates_Prospecting;
 extern LootStore LootTemplates_QuestMail;
+extern LootStore LootTemplates_Spell;
 
 void LoadLootTemplates_Creature();
 void LoadLootTemplates_Fishing();
 void LoadLootTemplates_Gameobject();
 void LoadLootTemplates_Item();
+void LoadLootTemplates_Milling();
 void LoadLootTemplates_Pickpocketing();
 void LoadLootTemplates_Skinning();
 void LoadLootTemplates_Disenchant();
 void LoadLootTemplates_Prospecting();
 void LoadLootTemplates_QuestMail();
+
+void LoadLootTemplates_Spell();
 void LoadLootTemplates_Reference();
 
 inline void LoadLootTables()
@@ -318,11 +326,14 @@ inline void LoadLootTables()
     LoadLootTemplates_Fishing();
     LoadLootTemplates_Gameobject();
     LoadLootTemplates_Item();
+    LoadLootTemplates_Milling();
     LoadLootTemplates_Pickpocketing();
     LoadLootTemplates_Skinning();
     LoadLootTemplates_Disenchant();
     LoadLootTemplates_Prospecting();
     LoadLootTemplates_QuestMail();
+    LoadLootTemplates_Spell();
+
     LoadLootTemplates_Reference();
 }
 

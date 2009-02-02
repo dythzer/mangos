@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ class MANGOS_DLL_SPEC PathMovementBase
         PathMovementBase() : i_currentNode(0) {}
         virtual ~PathMovementBase() {};
 
-        inline bool MovementInProgress(void) const { return i_currentNode < i_path.Size(); }
+        bool MovementInProgress(void) const { return i_currentNode < i_path.Size(); }
 
         // template pattern, not defined .. override required
         void LoadPath(T &);
@@ -73,10 +73,8 @@ class MANGOS_DLL_SPEC WaypointMovementGenerator<Creature>
 : public MovementGeneratorMedium< Creature, WaypointMovementGenerator<Creature> >,
 public PathMovementBase<Creature, WaypointPath*>
 {
-    TimeTrackerSmall i_nextMoveTime;
-    std::vector<bool> i_hasDone;
     public:
-        WaypointMovementGenerator(Creature &) : i_nextMoveTime(0) {}
+        WaypointMovementGenerator(Creature &) : i_nextMoveTime(0), b_StopedByPlayer(false) {}
         ~WaypointMovementGenerator() { ClearWaypoints(); }
         void Initialize(Creature &u)
         {
@@ -85,7 +83,12 @@ public PathMovementBase<Creature, WaypointPath*>
             LoadPath(u);
         }
         void Finalize(Creature &) {}
-        void Reset(Creature &u) { ReloadPath(u); }
+        void Reset(Creature &u)
+        {
+            ReloadPath(u);
+            b_StopedByPlayer = false;
+            i_nextMoveTime.Reset(0);
+        }
         bool Update(Creature &u, const uint32 &diff);
 
         void MovementInform(Creature &);
@@ -104,6 +107,9 @@ public PathMovementBase<Creature, WaypointPath*>
         static void Initialize(void);
     private:
         void ClearWaypoints();
+
+        TimeTrackerSmall i_nextMoveTime;
+        std::vector<bool> i_hasDone;
         bool b_StopedByPlayer;
 };
 
@@ -129,7 +135,7 @@ public PathMovementBase<Player>
 
         Path& GetPath() { return i_path; }
         uint32 GetPathAtMapEnd() const;
-        inline bool HasArrived() const { return (i_currentNode >= i_path.Size()); }
+        bool HasArrived() const { return (i_currentNode >= i_path.Size()); }
         void SetCurrentNodeAfterTeleport();
         void SkipCurrentNode() { ++i_currentNode; }
 };

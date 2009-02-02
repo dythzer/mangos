@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
 
 #ifndef _WIN64
 // Visual Leak Detector support enabled
-#include <vld/vld.h>
+//#include <vld/vld.h>
 // standard Visual Studio leak check disabled,
 //#  define _CRTDBG_MAP_ALLOC
 //#  include <stdlib.h>

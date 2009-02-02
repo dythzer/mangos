@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +36,7 @@
 #include "Opcodes.h"
 #include "ObjectDefines.h"
 #include "MapInstanced.h"
+#include "World.h"
 
 #include <cmath>
 
@@ -45,7 +46,6 @@ INSTANTIATE_CLASS_MUTEX(ObjectAccessor, ZThread::FastMutex);
 
 namespace MaNGOS
 {
-
     struct MANGOS_DLL_DECL BuildUpdateForPlayer
     {
         Player &i_player;
@@ -128,9 +128,12 @@ ObjectAccessor::GetNPCIfCanInteractWith(Player const &player, uint64 guid, uint3
 }
 
 Creature*
-ObjectAccessor::GetCreatureOrPet(WorldObject const &u, uint64 guid)
+ObjectAccessor::GetCreatureOrPetOrVehicle(WorldObject const &u, uint64 guid)
 {
     if(Creature *unit = GetPet(guid))
+        return unit;
+
+    if(Creature *unit = GetVehicle(guid))
         return unit;
 
     return GetCreature(u, guid);
@@ -161,18 +164,23 @@ ObjectAccessor::GetUnit(WorldObject const &u, uint64 guid)
     if(IS_PLAYER_GUID(guid))
         return FindPlayer(guid);
 
-    return GetCreatureOrPet(u, guid);
+    return GetCreatureOrPetOrVehicle(u, guid);
 }
 
 Corpse*
 ObjectAccessor::GetCorpse(WorldObject const &u, uint64 guid)
 {
     Corpse * ret = GetObjectInWorld(guid, (Corpse*)NULL);
-    if(ret && ret->GetMapId() != u.GetMapId()) ret = NULL;
+    if(!ret)
+        return NULL;
+    if(ret->GetMapId() != u.GetMapId())
+        return NULL;
+    if(ret->GetInstanceId() != u.GetInstanceId())
+        return NULL;
     return ret;
 }
 
-Object* ObjectAccessor::GetObjectByTypeMask(Player const &p, uint64 guid, uint32 typemask)
+Object* ObjectAccessor::GetObjectByTypeMask(WorldObject const &p, uint64 guid, uint32 typemask)
 {
     Object *obj = NULL;
 
@@ -184,7 +192,7 @@ Object* ObjectAccessor::GetObjectByTypeMask(Player const &p, uint64 guid, uint32
 
     if(typemask & TYPEMASK_UNIT)
     {
-        obj = GetCreatureOrPet(p,guid);
+        obj = GetCreatureOrPetOrVehicle(p,guid);
         if(obj) return obj;
     }
 
@@ -200,9 +208,9 @@ Object* ObjectAccessor::GetObjectByTypeMask(Player const &p, uint64 guid, uint32
         if(obj) return obj;
     }
 
-    if(typemask & TYPEMASK_ITEM)
+    if(typemask & TYPEMASK_ITEM && p.GetTypeId() == TYPEID_PLAYER)
     {
-        obj = p.GetItemByGuid( guid );
+        obj = ((Player const &)p).GetItemByGuid( guid );
         if(obj) return obj;
     }
 
@@ -213,15 +221,25 @@ GameObject*
 ObjectAccessor::GetGameObject(WorldObject const &u, uint64 guid)
 {
     GameObject * ret = GetObjectInWorld(guid, (GameObject*)NULL);
-    if(ret && ret->GetMapId() != u.GetMapId()) ret = NULL;
+    if(!ret)
+        return NULL;
+    if(ret->GetMapId() != u.GetMapId())
+        return NULL;
+    if(ret->GetInstanceId() != u.GetInstanceId())
+        return NULL;
     return ret;
 }
 
 DynamicObject*
-ObjectAccessor::GetDynamicObject(Unit const &u, uint64 guid)
+ObjectAccessor::GetDynamicObject(WorldObject const &u, uint64 guid)
 {
     DynamicObject * ret = GetObjectInWorld(guid, (DynamicObject*)NULL);
-    if(ret && ret->GetMapId() != u.GetMapId()) ret = NULL;
+    if(!ret)
+        return NULL;
+    if(ret->GetMapId() != u.GetMapId())
+        return NULL;
+    if(ret->GetInstanceId() != u.GetInstanceId())
+        return NULL;
     return ret;
 }
 
@@ -269,22 +287,6 @@ ObjectAccessor::UpdateObject(Object* obj, Player* exceptPlayer)
         iter->first->GetSession()->SendPacket(&packet);
         packet.clear();
     }
-}
-
-void
-ObjectAccessor::AddUpdateObject(Object *obj)
-{
-    Guard guard(i_updateGuard);
-    i_objects.insert(obj);
-}
-
-void
-ObjectAccessor::RemoveUpdateObject(Object *obj)
-{
-    Guard guard(i_updateGuard);
-    std::set<Object *>::iterator iter = i_objects.find(obj);
-    if( iter != i_objects.end() )
-        i_objects.erase( iter );
 }
 
 void
@@ -348,6 +350,12 @@ Pet*
 ObjectAccessor::GetPet(uint64 guid)
 {
     return GetObjectInWorld(guid, (Pet*)NULL);
+}
+
+Vehicle*
+ObjectAccessor::GetVehicle(uint64 guid)
+{
+    return GetObjectInWorld(guid, (Vehicle*)NULL);
 }
 
 Corpse*
@@ -422,7 +430,7 @@ ObjectAccessor::AddCorpsesToGrid(GridPair const& gridpair,GridType& grid,Map* ma
 }
 
 Corpse*
-ObjectAccessor::ConvertCorpseForPlayer(uint64 player_guid)
+ObjectAccessor::ConvertCorpseForPlayer(uint64 player_guid, bool insignia)
 {
     Corpse *corpse = GetCorpseForPlayerGUID(player_guid);
     if(!corpse)
@@ -448,7 +456,10 @@ ObjectAccessor::ConvertCorpseForPlayer(uint64 player_guid)
 
     Corpse *bones = NULL;
     // create the bones only if the map and the grid is loaded at the corpse's location
-    if(map && !map->IsRemovalGrid(corpse->GetPositionX(), corpse->GetPositionY()))
+    // ignore bones creating option in case insignia
+    if (map && (insignia ||
+        (map->IsBattleGroundOrArena() ? sWorld.getConfig(CONFIG_DEATH_BONES_BG_OR_ARENA) : sWorld.getConfig(CONFIG_DEATH_BONES_WORLD))) &&
+        !map->IsRemovalGrid(corpse->GetPositionX(), corpse->GetPositionY()))
     {
         // Create bones, don't change Corpse
         bones = new Corpse;
@@ -464,6 +475,7 @@ ObjectAccessor::ConvertCorpseForPlayer(uint64 player_guid)
         bones->Relocate(corpse->GetPositionX(), corpse->GetPositionY(), corpse->GetPositionZ(), corpse->GetOrientation());
         bones->SetMapId(corpse->GetMapId());
         bones->SetInstanceId(corpse->GetInstanceId());
+        bones->SetPhaseMask(corpse->GetPhaseMask(),false);
 
         bones->SetUInt32Value(CORPSE_FIELD_FLAGS, CORPSE_FLAG_UNK2 | CORPSE_FLAG_BONES);
         bones->SetUInt64Value(CORPSE_FIELD_OWNER, 0);
@@ -551,10 +563,11 @@ void ObjectAccessor::UpdateVisibilityForPlayer( Player* player )
 template <class T> UNORDERED_MAP< uint64, T* > HashMapHolder<T>::m_objectMap;
 template <class T> ZThread::FastMutex HashMapHolder<T>::i_lock;
 
-/// Global defintions for the hashmap storage
+/// Global definitions for the hashmap storage
 
 template class HashMapHolder<Player>;
 template class HashMapHolder<Pet>;
+template class HashMapHolder<Vehicle>;
 template class HashMapHolder<GameObject>;
 template class HashMapHolder<DynamicObject>;
 template class HashMapHolder<Creature>;
@@ -562,6 +575,7 @@ template class HashMapHolder<Corpse>;
 
 template Player* ObjectAccessor::GetObjectInWorld<Player>(uint32 mapid, float x, float y, uint64 guid, Player* /*fake*/);
 template Pet* ObjectAccessor::GetObjectInWorld<Pet>(uint32 mapid, float x, float y, uint64 guid, Pet* /*fake*/);
+template Vehicle* ObjectAccessor::GetObjectInWorld<Vehicle>(uint32 mapid, float x, float y, uint64 guid, Vehicle* /*fake*/);
 template Creature* ObjectAccessor::GetObjectInWorld<Creature>(uint32 mapid, float x, float y, uint64 guid, Creature* /*fake*/);
 template Corpse* ObjectAccessor::GetObjectInWorld<Corpse>(uint32 mapid, float x, float y, uint64 guid, Corpse* /*fake*/);
 template GameObject* ObjectAccessor::GetObjectInWorld<GameObject>(uint32 mapid, float x, float y, uint64 guid, GameObject* /*fake*/);

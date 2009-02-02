@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -153,20 +153,11 @@ void WorldSession::logUnexpectedOpcode(WorldPacket* packet, const char *reason)
 /// Update the WorldSession (triggered by World update)
 bool WorldSession::Update(uint32 /*diff*/)
 {
-    if (m_Socket && m_Socket->IsClosed ())
-    {
-        m_Socket->RemoveReference ();
-        m_Socket = NULL;
-    }
-
-    WorldPacket *packet;
-
     ///- Retrieve packets from the receive queue and call the appropriate handlers
-    /// \todo Is there a way to consolidate the OpcondeHandlerTable and the g_worldOpcodeNames to only maintain 1 list?
-    /// answer : there is a way, but this is better, because it would use redundant RAM
-    while (!_recvQueue.empty())
+    /// not proccess packets if socket already closed
+    while (!_recvQueue.empty() && m_Socket && !m_Socket->IsClosed ())
     {
-        packet = _recvQueue.next();
+        WorldPacket *packet = _recvQueue.next();
 
         /*#if 1
         sLog.outError( "MOEP: %s (0x%.4X)",
@@ -224,6 +215,13 @@ bool WorldSession::Update(uint32 /*diff*/)
         }
 
         delete packet;
+    }
+
+    ///- Cleanup socket pointer if need
+    if (m_Socket && m_Socket->IsClosed ())
+    {
+        m_Socket->RemoveReference ();
+        m_Socket = NULL;
     }
 
     ///- If necessary, log the player out
@@ -308,6 +306,10 @@ void WorldSession::LogoutPlayer(bool Save)
         ///- Remove player from battleground (teleport to entrance)
         if(_player->InBattleGround())
             _player->LeaveBattleground();
+
+        ///- Teleport to home if the player is in an invalid instance
+        if(!_player->m_InstanceValid && !_player->isGameMaster())
+            _player->TeleportTo(_player->m_homebindMapId, _player->m_homebindX, _player->m_homebindY, _player->m_homebindZ, _player->GetOrientation());
 
         for (int i=0; i < PLAYER_MAX_BATTLEGROUND_QUEUES; i++)
         {
@@ -480,38 +482,128 @@ void WorldSession::Handle_NULL( WorldPacket& recvPacket )
 
 void WorldSession::Handle_EarlyProccess( WorldPacket& recvPacket )
 {
-    sLog.outError( "SESSION: received opcode %s (0x%.4X) that must be proccessed in WorldSocket::OnRead",
+    sLog.outError( "SESSION: received opcode %s (0x%.4X) that must be processed in WorldSocket::OnRead",
         LookupOpcodeName(recvPacket.GetOpcode()),
         recvPacket.GetOpcode());
 }
 
 void WorldSession::Handle_ServerSide( WorldPacket& recvPacket )
 {
-    sLog.outError( "SESSION: received sever-side opcode %s (0x%.4X)",
+    sLog.outError( "SESSION: received server-side opcode %s (0x%.4X)",
         LookupOpcodeName(recvPacket.GetOpcode()),
         recvPacket.GetOpcode());
 }
 
-void WorldSession::Handle_Depricated( WorldPacket& recvPacket )
+void WorldSession::Handle_Deprecated( WorldPacket& recvPacket )
 {
-    sLog.outError( "SESSION: received depricated opcode %s (0x%.4X)",
+    sLog.outError( "SESSION: received deprecated opcode %s (0x%.4X)",
         LookupOpcodeName(recvPacket.GetOpcode()),
         recvPacket.GetOpcode());
 }
 
 void WorldSession::SendAuthWaitQue(uint32 position)
- {
-     if(position == 0)
-     {
-         WorldPacket packet( SMSG_AUTH_RESPONSE, 1 );
-         packet << uint8( AUTH_OK );
-         SendPacket(&packet);
-     }
-     else
-     {
-         WorldPacket packet( SMSG_AUTH_RESPONSE, 5 );
-         packet << uint8( AUTH_WAIT_QUEUE );
-         packet << uint32 (position);
-         SendPacket(&packet);
-     }
- }
+{
+    if(position == 0)
+    {
+        WorldPacket packet( SMSG_AUTH_RESPONSE, 1 );
+        packet << uint8( AUTH_OK );
+        SendPacket(&packet);
+    }
+    else
+    {
+        WorldPacket packet( SMSG_AUTH_RESPONSE, 5 );
+        packet << uint8( AUTH_WAIT_QUEUE );
+        packet << uint32 (position);
+        SendPacket(&packet);
+    }
+}
+
+void WorldSession::LoadAccountData()
+{
+    for (uint32 i = 0; i < NUM_ACCOUNT_DATA_TYPES; ++i)
+    {
+        AccountData data;
+        m_accountData[i] = data;
+    }
+
+    QueryResult *result = CharacterDatabase.PQuery("SELECT type, time, data FROM account_data WHERE account='%u'", GetAccountId());
+
+    if(!result)
+        return;
+
+    do
+    {
+        Field *fields = result->Fetch();
+
+        uint32 type = fields[0].GetUInt32();
+        if(type < NUM_ACCOUNT_DATA_TYPES)
+        {
+            m_accountData[type].Time = fields[1].GetUInt32();
+            m_accountData[type].Data = fields[2].GetCppString();
+        }
+    } while (result->NextRow());
+
+    delete result;
+}
+
+void WorldSession::SetAccountData(uint32 type, time_t time_, std::string data)
+{
+    m_accountData[type].Time = time_;
+    m_accountData[type].Data = data;
+
+    uint32 acc = GetAccountId();
+
+    CharacterDatabase.BeginTransaction ();
+    CharacterDatabase.PExecute("DELETE FROM account_data WHERE account='%u' AND type='%u'", acc, type);
+    CharacterDatabase.escape_string(data);
+    CharacterDatabase.PExecute("INSERT INTO account_data VALUES ('%u','%u','%u','%s')", acc, type, (uint32)time_, data.c_str());
+    CharacterDatabase.CommitTransaction ();
+}
+
+void WorldSession::ReadMovementInfo(WorldPacket &data, MovementInfo *mi)
+{
+    CHECK_PACKET_SIZE(data, data.rpos()+4+2+4+4+4+4+4);
+    data >> mi->flags;
+    data >> mi->unk1;
+    data >> mi->time;
+    data >> mi->x;
+    data >> mi->y;
+    data >> mi->z;
+    data >> mi->o;
+
+    if(mi->flags & MOVEMENTFLAG_ONTRANSPORT)
+    {
+        CHECK_PACKET_SIZE(data, data.rpos()+8+4+4+4+4+4+1);
+        data >> mi->t_guid;
+        data >> mi->t_x;
+        data >> mi->t_y;
+        data >> mi->t_z;
+        data >> mi->t_o;
+        data >> mi->t_time;
+        data >> mi->t_seat;
+    }
+
+    if((mi->flags & (MOVEMENTFLAG_SWIMMING | MOVEMENTFLAG_FLYING2)) || (mi->unk1 & 0x20))
+    {
+        CHECK_PACKET_SIZE(data, data.rpos()+4);
+        data >> mi->s_pitch;
+    }
+
+    CHECK_PACKET_SIZE(data, data.rpos()+4);
+    data >> mi->fallTime;
+
+    if(mi->flags & MOVEMENTFLAG_JUMPING)
+    {
+        CHECK_PACKET_SIZE(data, data.rpos()+4+4+4+4);
+        data >> mi->j_unk;
+        data >> mi->j_sinAngle;
+        data >> mi->j_cosAngle;
+        data >> mi->j_xyspeed;
+    }
+
+    if(mi->flags & MOVEMENTFLAG_SPLINE)
+    {
+        CHECK_PACKET_SIZE(data, data.rpos()+4);
+        data >> mi->u_unk1;
+    }
+}

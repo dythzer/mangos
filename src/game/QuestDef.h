@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,30 +42,33 @@ class ObjectMgr;
 enum QuestFailedReasons
 {
     INVALIDREASON_DONT_HAVE_REQ                 = 0,
-    INVALIDREASON_QUEST_FAILED_LOW_LEVEL        = 1,        //You are not high enough level for that quest.
-    INVALIDREASON_QUEST_FAILED_WRONG_RACE       = 6,        //That quest is not available to your race.
-    INVALIDREASON_QUEST_ALREADY_DONE            = 7,        //You have completed that quest.
-    INVALIDREASON_QUEST_ONLY_ONE_TIMED          = 12,       //You can only be on one timed quest at a time.
-    INVALIDREASON_QUEST_ALREADY_ON              = 13,       //You are already on that quest
-    INVALIDREASON_QUEST_FAILED_EXPANSION        = 16,       //This quest requires an expansion enabled account.
-    INVALIDREASON_QUEST_ALREADY_ON2             = 18,       //You are already on that quest
-    INVALIDREASON_QUEST_FAILED_MISSING_ITEMS    = 21,       //You don't have the required items with you. Check storage.
-    INVALIDREASON_QUEST_FAILED_NOT_ENOUGH_MONEY = 23,       //You don't have enough money for that quest.
-    INVALIDREASON_DAILY_QUESTS_REMAINING        = 26,       //You have already completed 10 daily quests today
-    INVALIDREASON_QUEST_FAILED_CAIS             = 27,       //You cannot complete quests once you have reached tired time
+    INVALIDREASON_QUEST_FAILED_LOW_LEVEL        = 1,        // You are not high enough level for that quest.
+    INVALIDREASON_QUEST_FAILED_WRONG_RACE       = 6,        // That quest is not available to your race.
+    INVALIDREASON_QUEST_ALREADY_DONE            = 7,        // You have completed that quest.
+    INVALIDREASON_QUEST_ONLY_ONE_TIMED          = 12,       // You can only be on one timed quest at a time.
+    INVALIDREASON_QUEST_ALREADY_ON              = 13,       // You are already on that quest.
+    INVALIDREASON_QUEST_FAILED_EXPANSION        = 16,       // This quest requires an expansion enabled account.
+    INVALIDREASON_QUEST_ALREADY_ON2             = 18,       // You are already on that quest.
+    INVALIDREASON_QUEST_FAILED_MISSING_ITEMS    = 21,       // You don't have the required items with you. Check storage.
+    INVALIDREASON_QUEST_FAILED_NOT_ENOUGH_MONEY = 23,       // You don't have enough money for that quest.
+    INVALIDREASON_DAILY_QUESTS_REMAINING        = 26,       // You have already completed 25 daily quests today.
+    INVALIDREASON_QUEST_FAILED_CAIS             = 27,       // You cannot complete quests once you have reached tired time.
+    INVALIDREASON_DAILY_QUEST_COMPLETED_TODAY   = 29        // You have completed that daily quest today.
 };
 
 enum QuestShareMessages
 {
-    QUEST_PARTY_MSG_SHARING_QUEST   = 0,
-    QUEST_PARTY_MSG_CANT_TAKE_QUEST = 1,
-    QUEST_PARTY_MSG_ACCEPT_QUEST    = 2,
-    QUEST_PARTY_MSG_REFUSE_QUEST    = 3,
-    QUEST_PARTY_MSG_TOO_FAR         = 4,
-    QUEST_PARTY_MSG_BUSY            = 5,
-    QUEST_PARTY_MSG_LOG_FULL        = 6,
-    QUEST_PARTY_MSG_HAVE_QUEST      = 7,
-    QUEST_PARTY_MSG_FINISH_QUEST    = 8,
+    QUEST_PARTY_MSG_SHARING_QUEST           = 0,
+    QUEST_PARTY_MSG_CANT_TAKE_QUEST         = 1,
+    QUEST_PARTY_MSG_ACCEPT_QUEST            = 2,
+    QUEST_PARTY_MSG_DECLINE_QUEST           = 3,
+    QUEST_PARTY_MSG_BUSY                    = 4,
+    QUEST_PARTY_MSG_LOG_FULL                = 5,
+    QUEST_PARTY_MSG_HAVE_QUEST              = 6,
+    QUEST_PARTY_MSG_FINISH_QUEST            = 7,
+    QUEST_PARTY_MSG_CANT_BE_SHARED_TODAY    = 8,
+    QUEST_PARTY_MSG_SHARING_TIMER_EXPIRED   = 9,
+    QUEST_PARTY_MSG_NOT_IN_PARTY            = 10
 };
 
 enum __QuestTradeSkill
@@ -112,24 +115,24 @@ enum __QuestGiverStatus
 
 enum __QuestFlags
 {
-    // Flags used at server and sended to client
-    QUEST_FLAGS_STAY_ALIVE     = 1,                         // Not used currently
-    QUEST_FLAGS_PARTY_ACCEPT   = 2,                         // Not used currently. If player in party, all players that can accept this quest will receive confirmation box to accept quest CMSG_QUEST_CONFIRM_ACCEPT/SMSG_QUEST_CONFIRM_ACCEPT
-    QUEST_FLAGS_EXPLORATION    = 4,                         // Not used currently
-    QUEST_FLAGS_SHARABLE       = 8,                         // Can be shared: Player::CanShareQuest()
-    //QUEST_FLAGS_NONE2        = 16,                        // Not used currently
-    QUEST_FLAGS_EPIC           = 32,                        // Not used currently: Unsure of content
-    QUEST_FLAGS_RAID           = 64,                        // Not used currently
-    QUEST_FLAGS_TBC            = 128,                       // Not used currently: Available if TBC expension enabled only
-    QUEST_FLAGS_UNK2           = 256,                       // Not used currently: _DELIVER_MORE Quest needs more than normal _q-item_ drops from mobs
-    QUEST_FLAGS_HIDDEN_REWARDS = 512,                       // Items and money rewarded only sent in SMSG_QUESTGIVER_OFFER_REWARD (not in SMSG_QUESTGIVER_QUEST_DETAILS or in client quest log(SMSG_QUEST_QUERY_RESPONSE))
-    QUEST_FLAGS_AUTO_REWARDED  = 1024,                      // These quests are automatically rewarded on quest complete and they will never appear in quest log client side.
-    QUEST_FLAGS_TBC_RACES      = 2048,                      // Not used currently: Bloodelf/draenei starting zone quests
-    QUEST_FLAGS_DAILY          = 4096,                      // Used to know quest is Daily one
+    // Flags used at server and sent to client
+    QUEST_FLAGS_STAY_ALIVE     = 0x00000001,                // Not used currently
+    QUEST_FLAGS_PARTY_ACCEPT   = 0x00000002,                // Not used currently. If player in party, all players that can accept this quest will receive confirmation box to accept quest CMSG_QUEST_CONFIRM_ACCEPT/SMSG_QUEST_CONFIRM_ACCEPT
+    QUEST_FLAGS_EXPLORATION    = 0x00000004,                // Not used currently
+    QUEST_FLAGS_SHARABLE       = 0x00000008,                // Can be shared: Player::CanShareQuest()
+    //QUEST_FLAGS_NONE2        = 0x00000010,                // Not used currently
+    QUEST_FLAGS_EPIC           = 0x00000020,                // Not used currently: Unsure of content
+    QUEST_FLAGS_RAID           = 0x00000040,                // Not used currently
+    QUEST_FLAGS_TBC            = 0x00000080,                // Not used currently: Available if TBC expension enabled only
+    QUEST_FLAGS_UNK2           = 0x00000100,                // Not used currently: _DELIVER_MORE Quest needs more than normal _q-item_ drops from mobs
+    QUEST_FLAGS_HIDDEN_REWARDS = 0x00000200,                // Items and money rewarded only sent in SMSG_QUESTGIVER_OFFER_REWARD (not in SMSG_QUESTGIVER_QUEST_DETAILS or in client quest log(SMSG_QUEST_QUERY_RESPONSE))
+    QUEST_FLAGS_AUTO_REWARDED  = 0x00000400,                // These quests are automatically rewarded on quest complete and they will never appear in quest log client side.
+    QUEST_FLAGS_TBC_RACES      = 0x00000800,                // Not used currently: Blood elf/Draenei starting zone quests
+    QUEST_FLAGS_DAILY          = 0x00001000,                // Used to know quest is Daily one
 
     // Mangos flags for set SpecialFlags in DB if required but used only at server
     QUEST_MANGOS_FLAGS_REPEATABLE           = 0x010000,     // Set by 1 in SpecialFlags from DB
-    QUEST_MANGOS_FLAGS_EXPLORATION_OR_EVENT = 0x020000,     // Set by 2 in SpecialFlags from DB (if reequired area explore, spell SPELL_EFFECT_QUEST_COMPLETE casting, table `*_script` command SCRIPT_COMMAND_QUEST_EXPLORED use, set from script DLL)
+    QUEST_MANGOS_FLAGS_EXPLORATION_OR_EVENT = 0x020000,     // Set by 2 in SpecialFlags from DB (if required area explore, spell SPELL_EFFECT_QUEST_COMPLETE casting, table `*_script` command SCRIPT_COMMAND_QUEST_EXPLORED use, set from script DLL)
     QUEST_MANGOS_FLAGS_DB_ALLOWED = 0xFFFF | QUEST_MANGOS_FLAGS_REPEATABLE | QUEST_MANGOS_FLAGS_EXPLORATION_OR_EVENT,
 
     // Mangos flags for internal use only
@@ -188,6 +191,8 @@ class Quest
         int32  GetExclusiveGroup() const { return ExclusiveGroup; }
         uint32 GetNextQuestInChain() const { return NextQuestInChain; }
         uint32 GetCharTitleId() const { return CharTitleId; }
+        uint32 GetPlayersSlain() const { return PlayersSlain; }
+        uint32 GetBonusTalents() const { return BonusTalents; }
         uint32 GetSrcItemId() const { return SrcItemId; }
         uint32 GetSrcItemCount() const { return SrcItemCount; }
         uint32 GetSrcSpell() const { return SrcSpell; }
@@ -275,6 +280,8 @@ class Quest
         uint32 LimitTime;
         uint32 QuestFlags;
         uint32 CharTitleId;
+        uint32 PlayersSlain;
+        uint32 BonusTalents;
         int32  PrevQuestId;
         int32  NextQuestId;
         int32  ExclusiveGroup;
@@ -318,7 +325,7 @@ struct QuestStatusData
         : m_status(QUEST_STATUS_NONE),m_rewarded(false),
         m_explored(false), m_timer(0), uState(QUEST_NEW)
     {
-        memset(m_itemcount,    0, QUEST_OBJECTIVES_COUNT * sizeof(uint32));
+        memset(m_itemcount, 0, QUEST_OBJECTIVES_COUNT * sizeof(uint32));
         memset(m_creatureOrGOcount, 0, QUEST_OBJECTIVES_COUNT * sizeof(uint32));
     }
 

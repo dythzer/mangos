@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -63,7 +63,7 @@ struct FriendInfo
         Note = "";
     }
 
-    FriendInfo(uint32 flags, std::string note)
+    FriendInfo(uint32 flags, const std::string& note)
     {
         Status = FRIEND_STATUS_OFFLINE;
         Flags = flags;
@@ -141,7 +141,8 @@ class SocialMgr
         SocialMgr();
         ~SocialMgr();
         // Misc
-        void RemovePlayerSocial(uint32 guid);
+        void RemovePlayerSocial(uint32 guid) { m_socialMap.erase(guid); }
+
         void GetFriendInfo(Player *player, uint32 friendGUID, FriendInfo &friendInfo);
         // Packet management
         void MakeFriendStatusPacket(FriendsResult result, uint32 friend_guid, WorldPacket *data);

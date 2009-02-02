@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -282,10 +282,10 @@ class ObjectMgr
 
         typedef std::set< Group * > GroupSet;
         typedef std::set< Guild * > GuildSet;
-        typedef std::set< ArenaTeam * > ArenaTeamSet;
+
+        typedef UNORDERED_MAP<uint32, ArenaTeam* > ArenaTeamMap;
 
         typedef UNORDERED_MAP<uint32, Quest*> QuestMap;
-
 
         typedef UNORDERED_MAP<uint32, AreaTrigger> AreaTriggerMap;
 
@@ -313,16 +313,18 @@ class ObjectMgr
 
         Guild* GetGuildByLeader(uint64 const&guid) const;
         Guild* GetGuildById(const uint32 GuildId) const;
-        Guild* GetGuildByName(std::string guildname) const;
+        Guild* GetGuildByName(const std::string& guildname) const;
         std::string GetGuildNameById(const uint32 GuildId) const;
         void AddGuild(Guild* guild) { mGuildSet.insert( guild ); }
         void RemoveGuild(Guild* guild) { mGuildSet.erase( guild ); }
 
-        ArenaTeam* GetArenaTeamById(const uint32 ArenaTeamId) const;
-        ArenaTeam* GetArenaTeamByName(std::string ArenaTeamName) const;
-        ArenaTeam* GetArenaTeamByCapitan(uint64 const& guid) const;
-        void AddArenaTeam(ArenaTeam* arenateam) { mArenaTeamSet.insert( arenateam ); }
-        void RemoveArenaTeam(ArenaTeam* arenateam) { mArenaTeamSet.erase( arenateam ); }
+        ArenaTeam* GetArenaTeamById(const uint32 arenateamid) const;
+        ArenaTeam* GetArenaTeamByName(const std::string& arenateamname) const;
+        ArenaTeam* GetArenaTeamByCaptain(uint64 const& guid) const;
+        void AddArenaTeam(ArenaTeam* arenaTeam);
+        void RemoveArenaTeam(ArenaTeam* arenaTeam);
+        ArenaTeamMap::iterator GetArenaTeamMapBegin() { return mArenaTeamMap.begin(); }
+        ArenaTeamMap::iterator GetArenaTeamMapEnd()   { return mArenaTeamMap.end(); }
 
         static CreatureInfo const *GetCreatureTemplate( uint32 id );
         CreatureModelInfo const *GetCreatureModelInfo( uint32 modelid );
@@ -405,9 +407,9 @@ class ObjectMgr
         bool GetPlayerNameByGUID(const uint64 &guid, std::string &name) const;
         uint32 GetPlayerTeamByGUID(const uint64 &guid) const;
         uint32 GetPlayerAccountIdByGUID(const uint64 &guid) const;
-        uint32 GetPlayerAccountIdByPlayerName(std::string name) const;
+        uint32 GetPlayerAccountIdByPlayerName(const std::string& name) const;
 
-        uint32 GetNearestTaxiNode( float x, float y, float z, uint32 mapid );
+        uint32 GetNearestTaxiNode( float x, float y, float z, uint32 mapid, uint32 team );
         void GetTaxiPath( uint32 source, uint32 destination, uint32 &path, uint32 &cost);
         uint16 GetTaxiMount( uint32 id, uint32 team );
         void GetTaxiPathNodes( uint32 path, Path &pathnodes, std::vector<uint32>& mapIds );
@@ -462,6 +464,7 @@ class ObjectMgr
         }
 
         AreaTrigger const* GetGoBackTrigger(uint32 Map) const;
+        AreaTrigger const* GetMapEntranceTrigger(uint32 Map) const;
 
         uint32 GetAreaTriggerScriptId(uint32 trigger_id);
 
@@ -565,6 +568,7 @@ class ObjectMgr
 
         std::string GeneratePetName(uint32 entry);
         uint32 GetBaseXP(uint32 level);
+        uint32 GetXPForLevel(uint32 level);
 
         int32 GetFishingBaseSkillLevel(uint32 entry) const
         {
@@ -698,15 +702,12 @@ class ObjectMgr
 
         // reserved names
         void LoadReservedPlayersNames();
-        bool IsReservedName(std::string name) const
-        {
-            return m_ReservedNames.find(name) != m_ReservedNames.end();
-        }
+        bool IsReservedName(const std::string& name) const;
 
         // name with valid structure and symbols
-        static bool IsValidName( std::string name, bool create = false );
-        static bool IsValidCharterName( std::string name );
-        static bool IsValidPetName( std::string name );
+        static bool IsValidName( const std::string& name, bool create = false );
+        static bool IsValidCharterName( const std::string& name );
+        static bool IsValidPetName( const std::string& name );
 
         static bool CheckDeclinedNames(std::wstring mainpart, DeclinedName const& names);
 
@@ -730,10 +731,10 @@ class ObjectMgr
             if(itr==m_GameTeleMap.end()) return NULL;
             return &itr->second;
         }
-        GameTele const* GetGameTele(std::string name) const;
+        GameTele const* GetGameTele(const std::string& name) const;
         GameTeleMap const& GetGameTeleMap() const { return m_GameTeleMap; }
         bool AddGameTele(GameTele& data);
-        bool DeleteGameTele(std::string name);
+        bool DeleteGameTele(const std::string& name);
 
         CacheNpcOptionList const& GetNpcOptions() const { return m_mCacheNpcOptionList; }
 
@@ -771,6 +772,8 @@ class ObjectMgr
         ScriptNameMap &GetScriptNames() { return m_scriptNames; }
         const char * GetScriptName(uint32 id) { return id < m_scriptNames.size() ? m_scriptNames[id].c_str() : ""; }
         uint32 GetScriptId(const char *name);
+
+        int GetOrNewIndexForLocale(LocaleConstant loc);
     protected:
 
         // first free id for selected id type
@@ -785,6 +788,7 @@ class ObjectMgr
         uint32 m_hiCharGuid;
         uint32 m_hiCreatureGuid;
         uint32 m_hiPetGuid;
+        uint32 m_hiVehicleGuid;
         uint32 m_hiItemGuid;
         uint32 m_hiGoGuid;
         uint32 m_hiDoGuid;
@@ -801,7 +805,7 @@ class ObjectMgr
 
         GroupSet            mGroupSet;
         GuildSet            mGuildSet;
-        ArenaTeamSet        mArenaTeamSet;
+        ArenaTeamMap        mArenaTeamMap;
 
         ItemMap             mItems;
         ItemMap             mAitems;
@@ -827,7 +831,7 @@ class ObjectMgr
         PetCreateSpellMap   mPetCreateSpell;
 
         //character reserved names
-        typedef std::set<std::string> ReservedNamesMap;
+        typedef std::set<std::wstring> ReservedNamesMap;
         ReservedNamesMap    m_ReservedNames;
 
         GraveYardMap        mGraveYardMap;
@@ -838,9 +842,9 @@ class ObjectMgr
 
         typedef             std::vector<LocaleConstant> LocalForIndex;
         LocalForIndex        m_LocalForIndex;
-        int GetOrNewIndexForLocale(LocaleConstant loc);
 
         int DBCLocaleIndex;
+
     private:
         void LoadScripts(ScriptMapMap& scripts, char const* tablename);
         void CheckScripts(ScriptMapMap const& scripts,std::set<int32>& ids);
@@ -855,6 +859,9 @@ class ObjectMgr
 
         void BuildPlayerLevelInfo(uint8 race, uint8 class_, uint8 level, PlayerLevelInfo* plinfo) const;
         PlayerInfo playerInfo[MAX_RACES][MAX_CLASSES];
+
+        typedef std::vector<uint32> PlayerXPperLevel;       // [level]
+        PlayerXPperLevel mPlayerXPperLevel;
 
         typedef std::map<uint32,uint32> BaseXPMap;          // [area level][base xp]
         BaseXPMap mBaseXPTable;

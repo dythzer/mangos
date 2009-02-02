@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -66,8 +66,8 @@ enum LoginResult
 
 // we need to stick to 1 version or half of the stuff will work for someone
 // others will not and opposite
-// will only support WoW and WoW:TBC 2.4.3 client build 8606...
+// will only support WoW, WoW:TBC and WoW:WotLK 3.0.8 client build 9506...
 
-//#define EXPECTED_MANGOS_CLIENT_BUILD        {8606, 0} // Using option from realmd.conf in impconfig
+//#define EXPECTED_MANGOS_CLIENT_BUILD        {9506, 0} // Using option from realmd.conf (impconfig)
 
 #endif

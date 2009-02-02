@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -298,7 +298,7 @@ void AuthSocket::OnRead()
 }
 
 /// Make the SRP6 calculation from hash in dB
-void AuthSocket::_SetVSFields(std::string rI)
+void AuthSocket::_SetVSFields(const std::string& rI)
 {
     BigNumber I;
     I.SetHexStr(rI.c_str());

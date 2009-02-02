@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,6 +27,9 @@
 #include "Database/SQLStorage.h"
 
 #include "Utilities/UnorderedMap.h"
+
+#include "Player.h"
+
 #include <map>
 
 class Player;
@@ -36,175 +39,188 @@ extern SQLStorage sSpellThreatStore;
 
 enum SpellFailedReason
 {
-    SPELL_FAILED_AFFECTING_COMBAT               = 0x00,
-    SPELL_FAILED_ALREADY_AT_FULL_HEALTH         = 0x01,
-    SPELL_FAILED_ALREADY_AT_FULL_MANA           = 0x02,
-    SPELL_FAILED_ALREADY_AT_FULL_POWER          = 0x03,
-    SPELL_FAILED_ALREADY_BEING_TAMED            = 0x04,
-    SPELL_FAILED_ALREADY_HAVE_CHARM             = 0x05,
-    SPELL_FAILED_ALREADY_HAVE_SUMMON            = 0x06,
-    SPELL_FAILED_ALREADY_OPEN                   = 0x07,
-    SPELL_FAILED_AURA_BOUNCED                   = 0x08,
-    SPELL_FAILED_AUTOTRACK_INTERRUPTED          = 0x09,
-    SPELL_FAILED_BAD_IMPLICIT_TARGETS           = 0x0A,
-    SPELL_FAILED_BAD_TARGETS                    = 0x0B,
-    SPELL_FAILED_CANT_BE_CHARMED                = 0x0C,
-    SPELL_FAILED_CANT_BE_DISENCHANTED           = 0x0D,
-    SPELL_FAILED_CANT_BE_DISENCHANTED_SKILL     = 0x0E,
-    SPELL_FAILED_CANT_BE_PROSPECTED             = 0x0F,
-    SPELL_FAILED_CANT_CAST_ON_TAPPED            = 0x10,
-    SPELL_FAILED_CANT_DUEL_WHILE_INVISIBLE      = 0x11,
-    SPELL_FAILED_CANT_DUEL_WHILE_STEALTHED      = 0x12,
-    SPELL_FAILED_CANT_STEALTH                   = 0x13,
-    SPELL_FAILED_CASTER_AURASTATE               = 0x14,
-    SPELL_FAILED_CASTER_DEAD                    = 0x15,
-    SPELL_FAILED_CHARMED                        = 0x16,
-    SPELL_FAILED_CHEST_IN_USE                   = 0x17,
-    SPELL_FAILED_CONFUSED                       = 0x18,
-    SPELL_FAILED_DONT_REPORT                    = 0x19,
-    SPELL_FAILED_EQUIPPED_ITEM                  = 0x1A,
-    SPELL_FAILED_EQUIPPED_ITEM_CLASS            = 0x1B,
-    SPELL_FAILED_EQUIPPED_ITEM_CLASS_MAINHAND   = 0x1C,
-    SPELL_FAILED_EQUIPPED_ITEM_CLASS_OFFHAND    = 0x1D,
-    SPELL_FAILED_ERROR                          = 0x1E,
-    SPELL_FAILED_FIZZLE                         = 0x1F,
-    SPELL_FAILED_FLEEING                        = 0x20,
-    SPELL_FAILED_FOOD_LOWLEVEL                  = 0x21,
-    SPELL_FAILED_HIGHLEVEL                      = 0x22,
-    SPELL_FAILED_HUNGER_SATIATED                = 0x23,
-    SPELL_FAILED_IMMUNE                         = 0x24,
-    SPELL_FAILED_INTERRUPTED                    = 0x25,
-    SPELL_FAILED_INTERRUPTED_COMBAT             = 0x26,
-    SPELL_FAILED_ITEM_ALREADY_ENCHANTED         = 0x27,
-    SPELL_FAILED_ITEM_GONE                      = 0x28,
-    SPELL_FAILED_ITEM_NOT_FOUND                 = 0x29,
-    SPELL_FAILED_ITEM_NOT_READY                 = 0x2A,
-    SPELL_FAILED_LEVEL_REQUIREMENT              = 0x2B,
-    SPELL_FAILED_LINE_OF_SIGHT                  = 0x2C,
-    SPELL_FAILED_LOWLEVEL                       = 0x2D,
-    SPELL_FAILED_LOW_CASTLEVEL                  = 0x2E,
-    SPELL_FAILED_MAINHAND_EMPTY                 = 0x2F,
-    SPELL_FAILED_MOVING                         = 0x30,
-    SPELL_FAILED_NEED_AMMO                      = 0x31,
-    SPELL_FAILED_NEED_AMMO_POUCH                = 0x32,
-    SPELL_FAILED_NEED_EXOTIC_AMMO               = 0x33,
-    SPELL_FAILED_NOPATH                         = 0x34,
-    SPELL_FAILED_NOT_BEHIND                     = 0x35,
-    SPELL_FAILED_NOT_FISHABLE                   = 0x36,
-    SPELL_FAILED_NOT_FLYING                     = 0x37,
-    SPELL_FAILED_NOT_HERE                       = 0x38,
-    SPELL_FAILED_NOT_INFRONT                    = 0x39,
-    SPELL_FAILED_NOT_IN_CONTROL                 = 0x3A,
-    SPELL_FAILED_NOT_KNOWN                      = 0x3B,
-    SPELL_FAILED_NOT_MOUNTED                    = 0x3C,
-    SPELL_FAILED_NOT_ON_TAXI                    = 0x3D,
-    SPELL_FAILED_NOT_ON_TRANSPORT               = 0x3E,
-    SPELL_FAILED_NOT_READY                      = 0x3F,
-    SPELL_FAILED_NOT_SHAPESHIFT                 = 0x40,
-    SPELL_FAILED_NOT_STANDING                   = 0x41,
-    SPELL_FAILED_NOT_TRADEABLE                  = 0x42,
-    SPELL_FAILED_NOT_TRADING                    = 0x43,
-    SPELL_FAILED_NOT_UNSHEATHED                 = 0x44,
-    SPELL_FAILED_NOT_WHILE_GHOST                = 0x45,
-    SPELL_FAILED_NO_AMMO                        = 0x46,
-    SPELL_FAILED_NO_CHARGES_REMAIN              = 0x47,
-    SPELL_FAILED_NO_CHAMPION                    = 0x48,
-    SPELL_FAILED_NO_COMBO_POINTS                = 0x49,
-    SPELL_FAILED_NO_DUELING                     = 0x4A,
-    SPELL_FAILED_NO_ENDURANCE                   = 0x4B,
-    SPELL_FAILED_NO_FISH                        = 0x4C,
-    SPELL_FAILED_NO_ITEMS_WHILE_SHAPESHIFTED    = 0x4D,
-    SPELL_FAILED_NO_MOUNTS_ALLOWED              = 0x4E,
-    SPELL_FAILED_NO_PET                         = 0x4F,
-    SPELL_FAILED_NO_POWER                       = 0x50,
-    SPELL_FAILED_NOTHING_TO_DISPEL              = 0x51,
-    SPELL_FAILED_NOTHING_TO_STEAL               = 0x52,
-    SPELL_FAILED_ONLY_ABOVEWATER                = 0x53,
-    SPELL_FAILED_ONLY_DAYTIME                   = 0x54,
-    SPELL_FAILED_ONLY_INDOORS                   = 0x55,
-    SPELL_FAILED_ONLY_MOUNTED                   = 0x56,
-    SPELL_FAILED_ONLY_NIGHTTIME                 = 0x57,
-    SPELL_FAILED_ONLY_OUTDOORS                  = 0x58,
-    SPELL_FAILED_ONLY_SHAPESHIFT                = 0x59,
-    SPELL_FAILED_ONLY_STEALTHED                 = 0x5A,
-    SPELL_FAILED_ONLY_UNDERWATER                = 0x5B,
-    SPELL_FAILED_OUT_OF_RANGE                   = 0x5C,
-    SPELL_FAILED_PACIFIED                       = 0x5D,
-    SPELL_FAILED_POSSESSED                      = 0x5E,
-    SPELL_FAILED_REAGENTS                       = 0x5F,
-    SPELL_FAILED_REQUIRES_AREA                  = 0x60,
-    SPELL_FAILED_REQUIRES_SPELL_FOCUS           = 0x61,
-    SPELL_FAILED_ROOTED                         = 0x62,
-    SPELL_FAILED_SILENCED                       = 0x63,
-    SPELL_FAILED_SPELL_IN_PROGRESS              = 0x64,
-    SPELL_FAILED_SPELL_LEARNED                  = 0x65,
-    SPELL_FAILED_SPELL_UNAVAILABLE              = 0x66,
-    SPELL_FAILED_STUNNED                        = 0x67,
-    SPELL_FAILED_TARGETS_DEAD                   = 0x68,
-    SPELL_FAILED_TARGET_AFFECTING_COMBAT        = 0x69,
-    SPELL_FAILED_TARGET_AURASTATE               = 0x6A,
-    SPELL_FAILED_TARGET_DUELING                 = 0x6B,
-    SPELL_FAILED_TARGET_ENEMY                   = 0x6C,
-    SPELL_FAILED_TARGET_ENRAGED                 = 0x6D,
-    SPELL_FAILED_TARGET_FRIENDLY                = 0x6E,
-    SPELL_FAILED_TARGET_IN_COMBAT               = 0x6F,
-    SPELL_FAILED_TARGET_IS_PLAYER               = 0x70,
-    SPELL_FAILED_TARGET_IS_PLAYER_CONTROLLED    = 0x71,
-    SPELL_FAILED_TARGET_NOT_DEAD                = 0x72,
-    SPELL_FAILED_TARGET_NOT_IN_PARTY            = 0x73,
-    SPELL_FAILED_TARGET_NOT_LOOTED              = 0x74,
-    SPELL_FAILED_TARGET_NOT_PLAYER              = 0x75,
-    SPELL_FAILED_TARGET_NO_POCKETS              = 0x76,
-    SPELL_FAILED_TARGET_NO_WEAPONS              = 0x77,
-    SPELL_FAILED_TARGET_UNSKINNABLE             = 0x78,
-    SPELL_FAILED_THIRST_SATIATED                = 0x79,
-    SPELL_FAILED_TOO_CLOSE                      = 0x7A,
-    SPELL_FAILED_TOO_MANY_OF_ITEM               = 0x7B,
-    SPELL_FAILED_TOTEM_CATEGORY                 = 0x7C,
-    SPELL_FAILED_TOTEMS                         = 0x7D,
-    SPELL_FAILED_TRAINING_POINTS                = 0x7E,
-    SPELL_FAILED_TRY_AGAIN                      = 0x7F,
-    SPELL_FAILED_UNIT_NOT_BEHIND                = 0x80,
-    SPELL_FAILED_UNIT_NOT_INFRONT               = 0x81,
-    SPELL_FAILED_WRONG_PET_FOOD                 = 0x82,
-    SPELL_FAILED_NOT_WHILE_FATIGUED             = 0x83,
-    SPELL_FAILED_TARGET_NOT_IN_INSTANCE         = 0x84,
-    SPELL_FAILED_NOT_WHILE_TRADING              = 0x85,
-    SPELL_FAILED_TARGET_NOT_IN_RAID             = 0x86,
-    SPELL_FAILED_DISENCHANT_WHILE_LOOTING       = 0x87,
-    SPELL_FAILED_PROSPECT_WHILE_LOOTING         = 0x88,
-    SPELL_FAILED_PROSPECT_NEED_MORE             = 0x89,
-    SPELL_FAILED_TARGET_FREEFORALL              = 0x8A,
-    SPELL_FAILED_NO_EDIBLE_CORPSES              = 0x8B,
-    SPELL_FAILED_ONLY_BATTLEGROUNDS             = 0x8C,
-    SPELL_FAILED_TARGET_NOT_GHOST               = 0x8D,
-    SPELL_FAILED_TOO_MANY_SKILLS                = 0x8E,
-    SPELL_FAILED_TRANSFORM_UNUSABLE             = 0x8F,
-    SPELL_FAILED_WRONG_WEATHER                  = 0x90,
-    SPELL_FAILED_DAMAGE_IMMUNE                  = 0x91,
-    SPELL_FAILED_PREVENTED_BY_MECHANIC          = 0x92,
-    SPELL_FAILED_PLAY_TIME                      = 0x93,
-    SPELL_FAILED_REPUTATION                     = 0x94,
-    SPELL_FAILED_MIN_SKILL                      = 0x95,
-    SPELL_FAILED_NOT_IN_ARENA                   = 0x96,
-    SPELL_FAILED_NOT_ON_SHAPESHIFT              = 0x97,
-    SPELL_FAILED_NOT_ON_STEALTHED               = 0x98,
-    SPELL_FAILED_NOT_ON_DAMAGE_IMMUNE           = 0x99,
-    SPELL_FAILED_NOT_ON_MOUNTED                 = 0x9A,
-    SPELL_FAILED_TOO_SHALLOW                    = 0x9B,
-    SPELL_FAILED_TARGET_NOT_IN_SANCTUARY        = 0x9C,
-    SPELL_FAILED_TARGET_IS_TRIVIAL              = 0x9D,
-    SPELL_FAILED_BM_OR_INVISGOD                 = 0x9E,
-    SPELL_FAILED_EXPERT_RIDING_REQUIREMENT      = 0x9F,
-    SPELL_FAILED_ARTISAN_RIDING_REQUIREMENT     = 0xA0,
-    SPELL_FAILED_NOT_IDLE                       = 0xA1,
-    SPELL_FAILED_NOT_INACTIVE                   = 0xA2,
-    SPELL_FAILED_PARTIAL_PLAYTIME               = 0xA3,
-    SPELL_FAILED_NO_PLAYTIME                    = 0xA4,
-    SPELL_FAILED_NOT_IN_BATTLEGROUND            = 0xA5,
-    SPELL_FAILED_ONLY_IN_ARENA                  = 0xA6,
-    SPELL_FAILED_TARGET_LOCKED_TO_RAID_INSTANCE = 0xA7,
-    SPELL_FAILED_UNKNOWN                        = 0xA8,
+    SPELL_FAILED_AFFECTING_COMBAT = 0,
+    SPELL_FAILED_ALREADY_AT_FULL_HEALTH = 1,
+    SPELL_FAILED_ALREADY_AT_FULL_MANA = 2,
+    SPELL_FAILED_ALREADY_AT_FULL_POWER = 3,
+    SPELL_FAILED_ALREADY_BEING_TAMED = 4,
+    SPELL_FAILED_ALREADY_HAVE_CHARM = 5,
+    SPELL_FAILED_ALREADY_HAVE_SUMMON = 6,
+    SPELL_FAILED_ALREADY_OPEN = 7,
+    SPELL_FAILED_AURA_BOUNCED = 8,
+    SPELL_FAILED_AUTOTRACK_INTERRUPTED = 9,
+    SPELL_FAILED_BAD_IMPLICIT_TARGETS = 10,
+    SPELL_FAILED_BAD_TARGETS = 11,
+    SPELL_FAILED_CANT_BE_CHARMED = 12,
+    SPELL_FAILED_CANT_BE_DISENCHANTED = 13,
+    SPELL_FAILED_CANT_BE_DISENCHANTED_SKILL = 14,
+    SPELL_FAILED_CANT_BE_MILLED = 15,
+    SPELL_FAILED_CANT_BE_PROSPECTED = 16,
+    SPELL_FAILED_CANT_CAST_ON_TAPPED = 17,
+    SPELL_FAILED_CANT_DUEL_WHILE_INVISIBLE = 18,
+    SPELL_FAILED_CANT_DUEL_WHILE_STEALTHED = 19,
+    SPELL_FAILED_CANT_STEALTH = 20,
+    SPELL_FAILED_CASTER_AURASTATE = 21,
+    SPELL_FAILED_CASTER_DEAD = 22,
+    SPELL_FAILED_CHARMED = 23,
+    SPELL_FAILED_CHEST_IN_USE = 24,
+    SPELL_FAILED_CONFUSED = 25,
+    SPELL_FAILED_DONT_REPORT = 26,
+    SPELL_FAILED_EQUIPPED_ITEM = 27,
+    SPELL_FAILED_EQUIPPED_ITEM_CLASS = 28,
+    SPELL_FAILED_EQUIPPED_ITEM_CLASS_MAINHAND = 29,
+    SPELL_FAILED_EQUIPPED_ITEM_CLASS_OFFHAND = 30,
+    SPELL_FAILED_ERROR = 31,
+    SPELL_FAILED_FIZZLE = 32,
+    SPELL_FAILED_FLEEING = 33,
+    SPELL_FAILED_FOOD_LOWLEVEL = 34,
+    SPELL_FAILED_HIGHLEVEL = 35,
+    SPELL_FAILED_HUNGER_SATIATED = 36,
+    SPELL_FAILED_IMMUNE = 37,
+    SPELL_FAILED_INCORRECT_AREA = 38,
+    SPELL_FAILED_INTERRUPTED = 39,
+    SPELL_FAILED_INTERRUPTED_COMBAT = 40,
+    SPELL_FAILED_ITEM_ALREADY_ENCHANTED = 41,
+    SPELL_FAILED_ITEM_GONE = 42,
+    SPELL_FAILED_ITEM_NOT_FOUND = 43,
+    SPELL_FAILED_ITEM_NOT_READY = 44,
+    SPELL_FAILED_LEVEL_REQUIREMENT = 45,
+    SPELL_FAILED_LINE_OF_SIGHT = 46,
+    SPELL_FAILED_LOWLEVEL = 47,
+    SPELL_FAILED_LOW_CASTLEVEL = 48,
+    SPELL_FAILED_MAINHAND_EMPTY = 49,
+    SPELL_FAILED_MOVING = 50,
+    SPELL_FAILED_NEED_AMMO = 51,
+    SPELL_FAILED_NEED_AMMO_POUCH = 52,
+    SPELL_FAILED_NEED_EXOTIC_AMMO = 53,
+    SPELL_FAILED_NEED_MORE_ITEMS = 54,
+    SPELL_FAILED_NOPATH = 55,
+    SPELL_FAILED_NOT_BEHIND = 56,
+    SPELL_FAILED_NOT_FISHABLE = 57,
+    SPELL_FAILED_NOT_FLYING = 58,
+    SPELL_FAILED_NOT_HERE = 59,
+    SPELL_FAILED_NOT_INFRONT = 60,
+    SPELL_FAILED_NOT_IN_CONTROL = 61,
+    SPELL_FAILED_NOT_KNOWN = 62,
+    SPELL_FAILED_NOT_MOUNTED = 63,
+    SPELL_FAILED_NOT_ON_TAXI = 64,
+    SPELL_FAILED_NOT_ON_TRANSPORT = 65,
+    SPELL_FAILED_NOT_READY = 66,
+    SPELL_FAILED_NOT_SHAPESHIFT = 67,
+    SPELL_FAILED_NOT_STANDING = 68,
+    SPELL_FAILED_NOT_TRADEABLE = 69,
+    SPELL_FAILED_NOT_TRADING = 70,
+    SPELL_FAILED_NOT_UNSHEATHED = 71,
+    SPELL_FAILED_NOT_WHILE_GHOST = 72,
+    SPELL_FAILED_NOT_WHILE_LOOTING = 73,
+    SPELL_FAILED_NO_AMMO = 74,
+    SPELL_FAILED_NO_CHARGES_REMAIN = 75,
+    SPELL_FAILED_NO_CHAMPION = 76,
+    SPELL_FAILED_NO_COMBO_POINTS = 77,
+    SPELL_FAILED_NO_DUELING = 78,
+    SPELL_FAILED_NO_ENDURANCE = 79,
+    SPELL_FAILED_NO_FISH = 80,
+    SPELL_FAILED_NO_ITEMS_WHILE_SHAPESHIFTED = 81,
+    SPELL_FAILED_NO_MOUNTS_ALLOWED = 82,
+    SPELL_FAILED_NO_PET = 83,
+    SPELL_FAILED_NO_POWER = 84,
+    SPELL_FAILED_NOTHING_TO_DISPEL = 85,
+    SPELL_FAILED_NOTHING_TO_STEAL = 86,
+    SPELL_FAILED_ONLY_ABOVEWATER = 87,
+    SPELL_FAILED_ONLY_DAYTIME = 88,
+    SPELL_FAILED_ONLY_INDOORS = 89,
+    SPELL_FAILED_ONLY_MOUNTED = 90,
+    SPELL_FAILED_ONLY_NIGHTTIME = 91,
+    SPELL_FAILED_ONLY_OUTDOORS = 92,
+    SPELL_FAILED_ONLY_SHAPESHIFT = 93,
+    SPELL_FAILED_ONLY_STEALTHED = 94,
+    SPELL_FAILED_ONLY_UNDERWATER = 95,
+    SPELL_FAILED_OUT_OF_RANGE = 96,
+    SPELL_FAILED_PACIFIED = 97,
+    SPELL_FAILED_POSSESSED = 98,
+    SPELL_FAILED_REAGENTS = 99,
+    SPELL_FAILED_REQUIRES_AREA = 100,
+    SPELL_FAILED_REQUIRES_SPELL_FOCUS = 101,
+    SPELL_FAILED_ROOTED = 102,
+    SPELL_FAILED_SILENCED = 103,
+    SPELL_FAILED_SPELL_IN_PROGRESS = 104,
+    SPELL_FAILED_SPELL_LEARNED = 105,
+    SPELL_FAILED_SPELL_UNAVAILABLE = 106,
+    SPELL_FAILED_STUNNED = 107,
+    SPELL_FAILED_TARGETS_DEAD = 108,
+    SPELL_FAILED_TARGET_AFFECTING_COMBAT = 109,
+    SPELL_FAILED_TARGET_AURASTATE = 110,
+    SPELL_FAILED_TARGET_DUELING = 111,
+    SPELL_FAILED_TARGET_ENEMY = 112,
+    SPELL_FAILED_TARGET_ENRAGED = 113,
+    SPELL_FAILED_TARGET_FRIENDLY = 114,
+    SPELL_FAILED_TARGET_IN_COMBAT = 115,
+    SPELL_FAILED_TARGET_IS_PLAYER = 116,
+    SPELL_FAILED_TARGET_IS_PLAYER_CONTROLLED = 117,
+    SPELL_FAILED_TARGET_NOT_DEAD = 118,
+    SPELL_FAILED_TARGET_NOT_IN_PARTY = 119,
+    SPELL_FAILED_TARGET_NOT_LOOTED = 120,
+    SPELL_FAILED_TARGET_NOT_PLAYER = 121,
+    SPELL_FAILED_TARGET_NO_POCKETS = 122,
+    SPELL_FAILED_TARGET_NO_WEAPONS = 123,
+    SPELL_FAILED_TARGET_NO_RANGED_WEAPONS = 124,
+    SPELL_FAILED_TARGET_UNSKINNABLE = 125,
+    SPELL_FAILED_THIRST_SATIATED = 126,
+    SPELL_FAILED_TOO_CLOSE = 127,
+    SPELL_FAILED_TOO_MANY_OF_ITEM = 128,
+    SPELL_FAILED_TOTEM_CATEGORY = 129,
+    SPELL_FAILED_TOTEMS = 130,
+    SPELL_FAILED_TRY_AGAIN = 131,
+    SPELL_FAILED_UNIT_NOT_BEHIND = 132,
+    SPELL_FAILED_UNIT_NOT_INFRONT = 133,
+    SPELL_FAILED_WRONG_PET_FOOD = 134,
+    SPELL_FAILED_NOT_WHILE_FATIGUED = 135,
+    SPELL_FAILED_TARGET_NOT_IN_INSTANCE = 136,
+    SPELL_FAILED_NOT_WHILE_TRADING = 137,
+    SPELL_FAILED_TARGET_NOT_IN_RAID = 138,
+    SPELL_FAILED_TARGET_FREEFORALL = 139,
+    SPELL_FAILED_NO_EDIBLE_CORPSES = 140,
+    SPELL_FAILED_ONLY_BATTLEGROUNDS = 141,
+    SPELL_FAILED_TARGET_NOT_GHOST = 142,
+    SPELL_FAILED_TRANSFORM_UNUSABLE = 143,
+    SPELL_FAILED_WRONG_WEATHER = 144,
+    SPELL_FAILED_DAMAGE_IMMUNE = 145,
+    SPELL_FAILED_PREVENTED_BY_MECHANIC = 146,
+    SPELL_FAILED_PLAY_TIME = 147,
+    SPELL_FAILED_REPUTATION = 148,
+    SPELL_FAILED_MIN_SKILL = 149,
+    SPELL_FAILED_NOT_IN_ARENA = 150,
+    SPELL_FAILED_NOT_ON_SHAPESHIFT = 151,
+    SPELL_FAILED_NOT_ON_STEALTHED = 152,
+    SPELL_FAILED_NOT_ON_DAMAGE_IMMUNE = 153,
+    SPELL_FAILED_NOT_ON_MOUNTED = 154,
+    SPELL_FAILED_TOO_SHALLOW = 155,
+    SPELL_FAILED_TARGET_NOT_IN_SANCTUARY = 156,
+    SPELL_FAILED_TARGET_IS_TRIVIAL = 157,
+    SPELL_FAILED_BM_OR_INVISGOD = 158,
+    SPELL_FAILED_EXPERT_RIDING_REQUIREMENT = 159,
+    SPELL_FAILED_ARTISAN_RIDING_REQUIREMENT = 160,
+    SPELL_FAILED_NOT_IDLE = 161,
+    SPELL_FAILED_NOT_INACTIVE = 162,
+    SPELL_FAILED_PARTIAL_PLAYTIME = 163,
+    SPELL_FAILED_NO_PLAYTIME = 164,
+    SPELL_FAILED_NOT_IN_BATTLEGROUND = 165,
+    SPELL_FAILED_NOT_IN_RAID_INSTANCE = 166,
+    SPELL_FAILED_ONLY_IN_ARENA = 167,
+    SPELL_FAILED_TARGET_LOCKED_TO_RAID_INSTANCE = 168,
+    SPELL_FAILED_ON_USE_ENCHANT = 169,
+    SPELL_FAILED_NOT_ON_GROUND = 170,
+    SPELL_FAILED_CUSTOM_ERROR = 171,
+    SPELL_FAILED_CANT_DO_THAT_RIGHT_NOW = 172,
+    SPELL_FAILED_TOO_MANY_SOCKETS = 173,
+    SPELL_FAILED_INVALID_GLYPH = 174,
+    SPELL_FAILED_UNIQUE_GLYPH = 175,
+    SPELL_FAILED_GLYPH_SOCKET_LOCKED = 176,
+    SPELL_FAILED_NO_VALID_TARGETS = 177,
+    SPELL_FAILED_ITEM_AT_MAX_CHARGES = 178,
+    SPELL_FAILED_NOT_IN_BARBERSHOP = 179,
+    SPELL_FAILED_FISHING_TOO_LOW = 180,
+    SPELL_FAILED_UNKNOWN = 181
 };
 
 enum SpellFamilyNames
@@ -221,12 +237,12 @@ enum SpellFamilyNames
     SPELLFAMILY_HUNTER      = 9,
     SPELLFAMILY_PALADIN     = 10,
     SPELLFAMILY_SHAMAN      = 11,
-    SPELLFAMILY_UNK2        = 12,
+    SPELLFAMILY_UNK2        = 12,                           // 2 spells (silence resistance)
     SPELLFAMILY_POTION      = 13,
     // 14 - unused
     SPELLFAMILY_DEATHKNIGHT = 15,
     // 16 - unused
-    SPELLFAMILY_UNK3        = 17
+    SPELLFAMILY_PET         = 17
 };
 
 //Some SpellFamilyFlags
@@ -238,6 +254,7 @@ enum SpellFamilyNames
 #define SPELLFAMILYFLAG_ROGUE_KIDNEYSHOT        0x000200000LL
 #define SPELLFAMILYFLAG_ROGUE__FINISHING_MOVE   0x9003E0000LL
 
+#define SPELLFAMILYFLAG_PALADIN_SEALS           0x26000C000A000000LL
 // Spell clasification
 enum SpellSpecific
 {
@@ -257,7 +274,8 @@ enum SpellSpecific
     SPELL_JUDGEMENT         = 13,
     SPELL_BATTLE_ELIXIR     = 14,
     SPELL_GUARDIAN_ELIXIR   = 15,
-    SPELL_FLASK_ELIXIR      = 16
+    SPELL_FLASK_ELIXIR      = 16,
+    SPELL_PRESENCE          = 17
 };
 
 SpellSpecific GetSpellSpecific(uint32 spellId);
@@ -285,7 +303,7 @@ inline bool IsSealSpell(SpellEntry const *spellInfo)
 {
     //Collection of all the seal family flags. No other paladin spell has any of those.
     return spellInfo->SpellFamilyName == SPELLFAMILY_PALADIN &&
-        ( spellInfo->SpellFamilyFlags & 0x4000A000200LL );
+        ( spellInfo->SpellFamilyFlags & SPELLFAMILYFLAG_PALADIN_SEALS );
 }
 
 inline bool IsElementalShield(SpellEntry const *spellInfo)
@@ -294,9 +312,23 @@ inline bool IsElementalShield(SpellEntry const *spellInfo)
     return (spellInfo->SpellFamilyFlags & 0x42000000400LL) || spellInfo->Id == 23552;
 }
 
+inline bool IsExplicitDiscoverySpell(SpellEntry const *spellInfo)
+{
+    return spellInfo->Effect[0]==SPELL_EFFECT_CREATE_ITEM_2 && spellInfo->Effect[1]==SPELL_EFFECT_SCRIPT_EFFECT;
+}
+
 int32 CompareAuraRanks(uint32 spellId_1, uint32 effIndex_1, uint32 spellId_2, uint32 effIndex_2);
 bool IsSingleFromSpellSpecificPerCaster(uint32 spellSpec1,uint32 spellSpec2);
 bool IsPassiveSpell(uint32 spellId);
+
+inline bool IsPassiveSpellStackableWithRanks(SpellEntry const* spellProto)
+{
+    if(!IsPassiveSpell(spellProto->Id))
+        return false;
+
+    return !IsSpellHaveEffect(spellProto,SPELL_EFFECT_APPLY_AURA);
+}
+
 
 inline bool IsDeathPersistentSpell(SpellEntry const *spellInfo)
 {
@@ -323,7 +355,9 @@ bool IsPositiveTarget(uint32 targetA, uint32 targetB);
 bool IsSingleTargetSpell(SpellEntry const *spellInfo);
 bool IsSingleTargetSpells(SpellEntry const *spellInfo1, SpellEntry const *spellInfo2);
 
-bool IsSpellAllowedInLocation(SpellEntry const *spellInfo,uint32 map_id,uint32 zone_id,uint32 area_id);
+bool IsAuraAddedBySpell(uint32 auraType, uint32 spellId);
+
+uint8 GetSpellAllowedInLocationError(SpellEntry const *spellInfo,uint32 map_id,uint32 zone_id,uint32 area_id);
 
 inline bool IsAreaEffectTarget( Targets target )
 {
@@ -333,16 +367,16 @@ inline bool IsAreaEffectTarget( Targets target )
         case TARGET_ALL_ENEMY_IN_AREA:
         case TARGET_ALL_ENEMY_IN_AREA_INSTANT:
         case TARGET_ALL_PARTY_AROUND_CASTER:
-        case TARGET_ALL_AROUND_CASTER:
+        case TARGET_IN_FRONT_OF_CASTER:
         case TARGET_ALL_ENEMY_IN_AREA_CHANNELED:
         case TARGET_ALL_FRIENDLY_UNITS_AROUND_CASTER:
+        case TARGET_ALL_FRIENDLY_UNITS_IN_AREA:
         case TARGET_ALL_PARTY:
         case TARGET_ALL_PARTY_AROUND_CASTER_2:
         case TARGET_AREAEFFECT_PARTY:
         case TARGET_AREAEFFECT_CUSTOM_2:
+        case TARGET_ALL_RAID_AROUND_CASTER:
         case TARGET_AREAEFFECT_PARTY_AND_CLASS:
-        case TARGET_IN_FRONT_OF_CASTER:
-        case TARGET_ALL_FRIENDLY_UNITS_IN_AREA:
             return true;
         default:
             break;
@@ -364,6 +398,7 @@ inline bool IsAreaOfEffectSpell(SpellEntry const *spellInfo)
 inline bool IsAreaAuraEffect(uint32 effect)
 {
     if( effect == SPELL_EFFECT_APPLY_AREA_AURA_PARTY    ||
+        effect == SPELL_EFFECT_APPLY_AREA_AURA_RAID     ||
         effect == SPELL_EFFECT_APPLY_AREA_AURA_FRIEND   ||
         effect == SPELL_EFFECT_APPLY_AREA_AURA_ENEMY    ||
         effect == SPELL_EFFECT_APPLY_AREA_AURA_PET      ||
@@ -383,6 +418,11 @@ inline bool IsDispelSpell(SpellEntry const *spellInfo)
 inline bool isSpellBreakStealth(SpellEntry const* spellInfo)
 {
     return !(spellInfo->AttributesEx & SPELL_ATTR_EX_NOT_BREAK_STEALTH);
+}
+
+inline bool IsAutoRepeatRangedSpell(SpellEntry const* spellInfo)
+{
+    return (spellInfo->Attributes & SPELL_ATTR_RANGED) && (spellInfo->AttributesEx2 & SPELL_ATTR_EX2_AUTOREPEAT_FLAG);
 }
 
 uint8 GetErrorAtShapeshiftedCast (SpellEntry const *spellInfo, uint32 form);
@@ -412,6 +452,17 @@ inline uint32 GetSpellMechanicMask(SpellEntry const* spellInfo, int32 effect)
     return mask;
 }
 
+inline uint32 GetAllSpellMechanicMask(SpellEntry const* spellInfo)
+{
+    uint32 mask = 0;
+    if (spellInfo->Mechanic)
+        mask |= 1<<spellInfo->Mechanic;
+    for (int i=0; i< 3; ++i)
+        if (spellInfo->EffectMechanic[i])
+            mask |= 1<<spellInfo->EffectMechanic[i];
+    return mask;
+}
+
 inline Mechanics GetEffectMechanic(SpellEntry const* spellInfo, int32 effect)
 {
     if (spellInfo->EffectMechanic[effect])
@@ -436,59 +487,108 @@ bool IsDiminishingReturnsGroupDurationLimited(DiminishingGroup group);
 DiminishingReturnsType GetDiminishingReturnsGroupType(DiminishingGroup group);
 
 // Spell affects related declarations (accessed using SpellMgr functions)
-typedef std::map<uint32, uint64> SpellAffectMap;
+struct SpellAffectEntry
+{
+    uint32 SpellClassMask[3];
+};
+typedef UNORDERED_MAP<uint32, SpellAffectEntry> SpellAffectMap;
 
 // Spell proc event related declarations (accessed using SpellMgr functions)
 enum ProcFlags
 {
-    PROC_FLAG_NONE                  = 0x00000000,           // None
-    PROC_FLAG_HIT_MELEE             = 0x00000001,           // On melee hit
-    PROC_FLAG_STRUCK_MELEE          = 0x00000002,           // On being struck melee
-    PROC_FLAG_KILL_XP_GIVER         = 0x00000004,           // On kill target giving XP or honor
-    PROC_FLAG_SPECIAL_DROP          = 0x00000008,           //
-    PROC_FLAG_DODGE                 = 0x00000010,           // On dodge melee attack
-    PROC_FLAG_PARRY                 = 0x00000020,           // On parry melee attack
-    PROC_FLAG_BLOCK                 = 0x00000040,           // On block attack
-    PROC_FLAG_TOUCH                 = 0x00000080,           // On being touched (for bombs, probably?)
-    PROC_FLAG_TARGET_LOW_HEALTH     = 0x00000100,           // On deal damage to enemy with 20% or less health
-    PROC_FLAG_LOW_HEALTH            = 0x00000200,           // On health dropped below 20%
-    PROC_FLAG_STRUCK_RANGED         = 0x00000400,           // On being struck ranged
-    PROC_FLAG_HIT_SPECIAL           = 0x00000800,           // (!)Removed, may be reassigned in future
-    PROC_FLAG_CRIT_MELEE            = 0x00001000,           // On crit melee
-    PROC_FLAG_STRUCK_CRIT_MELEE     = 0x00002000,           // On being critically struck in melee
-    PROC_FLAG_CAST_SPELL            = 0x00004000,           // On cast spell
-    PROC_FLAG_TAKE_DAMAGE           = 0x00008000,           // On take damage
-    PROC_FLAG_CRIT_SPELL            = 0x00010000,           // On crit spell
-    PROC_FLAG_HIT_SPELL             = 0x00020000,           // On hit spell
-    PROC_FLAG_STRUCK_CRIT_SPELL     = 0x00040000,           // On being critically struck by a spell
-    PROC_FLAG_HIT_RANGED            = 0x00080000,           // On getting ranged hit
-    PROC_FLAG_STRUCK_SPELL          = 0x00100000,           // On being struck by a spell
-    PROC_FLAG_TRAP                  = 0x00200000,           // On trap activation (?)
-    PROC_FLAG_CRIT_RANGED           = 0x00400000,           // On getting ranged crit
-    PROC_FLAG_STRUCK_CRIT_RANGED    = 0x00800000,           // On being critically struck by a ranged attack
-    PROC_FLAG_RESIST_SPELL          = 0x01000000,           // On resist enemy spell
-    PROC_FLAG_TARGET_RESISTS        = 0x02000000,           // On enemy resisted spell
-    PROC_FLAG_TARGET_DODGE_OR_PARRY = 0x04000000,           // On enemy dodges/parries
-    PROC_FLAG_HEAL                  = 0x08000000,           // On heal
-    PROC_FLAG_CRIT_HEAL             = 0x10000000,           // On critical healing effect
-    PROC_FLAG_HEALED                = 0x20000000,           // On healing
-    PROC_FLAG_TARGET_BLOCK          = 0x40000000,           // On enemy blocks
-    PROC_FLAG_MISS                  = 0x80000000            // On miss melee attack
+   PROC_FLAG_NONE                          = 0x00000000,
+
+   PROC_FLAG_KILLED                        = 0x00000001,    // 00 Killed by agressor
+   PROC_FLAG_KILL                          = 0x00000002,    // 01 Kill target (in most cases need XP/Honor reward)
+
+   PROC_FLAG_SUCCESSFUL_MILEE_HIT          = 0x00000004,    // 02 Successful melee auto attack
+   PROC_FLAG_TAKEN_MELEE_HIT               = 0x00000008,    // 03 Taken damage from melee auto attack hit
+
+   PROC_FLAG_SUCCESSFUL_MELEE_SPELL_HIT    = 0x00000010,    // 04 Successful attack by Spell that use melee weapon
+   PROC_FLAG_TAKEN_MELEE_SPELL_HIT         = 0x00000020,    // 05 Taken damage by Spell that use melee weapon
+
+   PROC_FLAG_SUCCESSFUL_RANGED_HIT         = 0x00000040,    // 06 Successful Ranged auto attack
+   PROC_FLAG_TAKEN_RANGED_HIT              = 0x00000080,    // 07 Taken damage from ranged auto attack
+
+   PROC_FLAG_SUCCESSFUL_RANGED_SPELL_HIT   = 0x00000100,    // 08 Successful Ranged attack by Spell that use ranged weapon
+   PROC_FLAG_TAKEN_RANGED_SPELL_HIT        = 0x00000200,    // 09 Taken damage by Spell that use ranged weapon
+
+   PROC_FLAG_SUCCESSFUL_POSITIVE_AOE_HIT   = 0x00000400,    // 10 Successful AoE (not 100% shure unused)
+   PROC_FLAG_TAKEN_POSITIVE_AOE            = 0x00000800,    // 11 Taken AoE      (not 100% shure unused)
+
+   PROC_FLAG_SUCCESSFUL_AOE_SPELL_HIT      = 0x00001000,    // 12 Successful AoE damage spell hit (not 100% shure unused)
+   PROC_FLAG_TAKEN_AOE_SPELL_HIT           = 0x00002000,    // 13 Taken AoE damage spell hit      (not 100% shure unused)
+
+   PROC_FLAG_SUCCESSFUL_POSITIVE_SPELL     = 0x00004000,    // 14 Successful cast positive spell (by default only on healing)
+   PROC_FLAG_TAKEN_POSITIVE_SPELL          = 0x00008000,    // 15 Taken positive spell hit (by default only on healing)
+
+   PROC_FLAG_SUCCESSFUL_NEGATIVE_SPELL_HIT = 0x00010000,    // 16 Successful negative spell cast (by default only on damage)
+   PROC_FLAG_TAKEN_NEGATIVE_SPELL_HIT      = 0x00020000,    // 17 Taken negative spell (by default only on damage)
+
+   PROC_FLAG_ON_DO_PERIODIC                = 0x00040000,    // 18 Successful do periodic (damage / healing, determined from 14-17 flags)
+   PROC_FLAG_ON_TAKE_PERIODIC              = 0x00080000,    // 19 Taken spell periodic (damage / healing, determined from 14-17 flags)
+
+   PROC_FLAG_TAKEN_ANY_DAMAGE              = 0x00100000,    // 20 Taken any damage
+   PROC_FLAG_ON_TRAP_ACTIVATION            = 0x00200000,    // 21 On trap activation
+
+   PROC_FLAG_TAKEN_OFFHAND_HIT             = 0x00400000,    // 22 Taken off-hand melee attacks(not used)
+   PROC_FLAG_SUCCESSFUL_OFFHAND_HIT        = 0x00800000     // 23 Successful off-hand melee attacks
+};
+
+#define MELEE_BASED_TRIGGER_MASK (PROC_FLAG_SUCCESSFUL_MILEE_HIT        | \
+                                  PROC_FLAG_TAKEN_MELEE_HIT             | \
+                                  PROC_FLAG_SUCCESSFUL_MELEE_SPELL_HIT  | \
+                                  PROC_FLAG_TAKEN_MELEE_SPELL_HIT       | \
+                                  PROC_FLAG_SUCCESSFUL_RANGED_HIT       | \
+                                  PROC_FLAG_TAKEN_RANGED_HIT            | \
+                                  PROC_FLAG_SUCCESSFUL_RANGED_SPELL_HIT | \
+                                  PROC_FLAG_TAKEN_RANGED_SPELL_HIT)
+
+enum ProcFlagsEx
+{
+   PROC_EX_NONE                = 0x0000000,                 // If none can tigger on Hit/Crit only (passive spells MUST defined by SpellFamily flag)
+   PROC_EX_NORMAL_HIT          = 0x0000001,                 // If set only from normal hit (only damage spells)
+   PROC_EX_CRITICAL_HIT        = 0x0000002,
+   PROC_EX_MISS                = 0x0000004,
+   PROC_EX_RESIST              = 0x0000008,
+   PROC_EX_DODGE               = 0x0000010,
+   PROC_EX_PARRY               = 0x0000020,
+   PROC_EX_BLOCK               = 0x0000040,
+   PROC_EX_EVADE               = 0x0000080,
+   PROC_EX_IMMUNE              = 0x0000100,
+   PROC_EX_DEFLECT             = 0x0000200,
+   PROC_EX_ABSORB              = 0x0000400,
+   PROC_EX_REFLECT             = 0x0000800,
+   PROC_EX_INTERRUPT           = 0x0001000,                 // Melee hit result can be Interrupt (not used)
+   PROC_EX_RESERVED1           = 0x0002000,
+   PROC_EX_RESERVED2           = 0x0004000,
+   PROC_EX_RESERVED3           = 0x0008000,
+   PROC_EX_EX_TRIGGER_ALWAYS   = 0x0010000,                 // If set trigger always ( no matter another flags) used for drop charges
+   PROC_EX_EX_ONE_TIME_TRIGGER = 0x0020000                  // If set trigger always but only one time (not used)
 };
 
 struct SpellProcEventEntry
 {
     uint32      schoolMask;                                 // if nonzero - bit mask for matching proc condition based on spell candidate's school: Fire=2, Mask=1<<(2-1)=2
-    uint32      category;                                   // if nonzero - match proc condition based on candidate spell's category
-    uint32      skillId;                                    // if nonzero - for matching proc condition based on candidate spell's skillId from SkillLineAbility.dbc (Shadow Bolt = Destruction)
     uint32      spellFamilyName;                            // if nonzero - for matching proc condition based on candidate spell's SpellFamilyNamer value
-    uint64      spellFamilyMask;                            // if nonzero - for matching proc condition based on candidate spell's SpellFamilyFlags (like auras 107 and 108 do)
+    uint64      spellFamilyMask;                            // if nonzero - for matching proc condition based on candidate spell's SpellFamilyFlags  (like auras 107 and 108 do)
+    uint32      spellFamilyMask2;                           // if nonzero - for matching proc condition based on candidate spell's SpellFamilyFlags2 (like auras 107 and 108 do)
     uint32      procFlags;                                  // bitmask for matching proc event
+    uint32      procEx;                                     // proc Extend info (see ProcFlagsEx)
     float       ppmRate;                                    // for melee (ranged?) damage spells - proc rate per minute. if zero, falls back to flat chance from Spell.dbc
+    float       customChance;                               // Owerride chance (in most cases for debug only)
     uint32      cooldown;                                   // hidden cooldown used for some spell proc events, applied to _triggered_spell_
 };
 
+struct SpellBonusEntry
+{
+    float  direct_damage;
+    float  dot_damage;
+    float  ap_bonus;
+};
+
 typedef UNORDERED_MAP<uint32, SpellProcEventEntry> SpellProcEventMap;
+typedef UNORDERED_MAP<uint32, SpellBonusEntry>     SpellBonusMap;
 
 #define ELIXIR_BATTLE_MASK    0x1
 #define ELIXIR_GUARDIAN_MASK  0x2
@@ -606,12 +706,16 @@ typedef std::map<uint32, SpellLearnSkillNode> SpellLearnSkillMap;
 struct SpellLearnSpellNode
 {
     uint32 spell;
+    bool active;                                            // show in spellbook or not
     bool autoLearned;
 };
 
 typedef std::multimap<uint32, SpellLearnSpellNode> SpellLearnSpellMap;
 
 typedef std::multimap<uint32, SkillLineAbilityEntry const*> SkillLineAbilityMap;
+
+typedef std::map<uint32, uint32> PetLevelupSpellSet;
+typedef std::map<uint32, PetLevelupSpellSet> PetLevelupSpellMap;
 
 inline bool IsPrimaryProfessionSkill(uint32 skill)
 {
@@ -630,6 +734,11 @@ inline bool IsProfessionSkill(uint32 skill)
     return  IsPrimaryProfessionSkill(skill) || skill == SKILL_FISHING || skill == SKILL_COOKING || skill == SKILL_FIRST_AID;
 }
 
+inline bool IsProfessionOrRidingSkill(uint32 skill)
+{
+    return  IsProfessionSkill(skill) || skill == SKILL_RIDING;
+}
+
 class SpellMgr
 {
     // Constructors
@@ -640,15 +749,15 @@ class SpellMgr
         // Accessors (const or static functions)
     public:
         // Spell affects
-        uint64 GetSpellAffectMask(uint16 spellId, uint8 effectId) const
+        SpellAffectEntry const*GetSpellAffect(uint16 spellId, uint8 effectId) const
         {
             SpellAffectMap::const_iterator itr = mSpellAffectMap.find((spellId<<8) + effectId);
             if( itr != mSpellAffectMap.end( ) )
-                return itr->second;
+                return &itr->second;
             return 0;
         }
 
-        bool IsAffectedBySpell(SpellEntry const *spellInfo, uint32 spellId, uint8 effectId, uint64 familyFlags) const;
+        bool IsAffectedByMod(SpellEntry const *spellInfo, SpellModifier *mod) const;
 
         SpellElixirMap const& GetSpellElixirMap() const { return mSpellElixirs; }
 
@@ -683,7 +792,24 @@ class SpellMgr
             return NULL;
         }
 
-        static bool IsSpellProcEventCanTriggeredBy( SpellProcEventEntry const * spellProcEvent, SpellEntry const * procSpell, uint32 procFlags );
+        static bool IsSpellProcEventCanTriggeredBy( SpellProcEventEntry const * spellProcEvent, uint32 EventProcFlag, SpellEntry const * procSpell, uint32 procFlags, uint32 procExtra, bool active);
+
+        // Spell bonus data
+        SpellBonusEntry const* GetSpellBonusData(uint32 spellId) const
+        {
+            // Lookup data
+            SpellBonusMap::const_iterator itr = mSpellBonusMap.find(spellId);
+            if( itr != mSpellBonusMap.end( ) )
+                return &itr->second;
+            // Not found, try lookup for 1 spell rank if exist
+            if (uint32 rank_1 = GetFirstSpellInChain(spellId))
+            {
+                SpellBonusMap::const_iterator itr = mSpellBonusMap.find(rank_1);
+                if( itr != mSpellBonusMap.end( ) )
+                    return &itr->second;
+            }
+            return NULL;
+        }
 
         // Spell target coordinates
         SpellTargetPosition const* GetSpellTargetPosition(uint32 spell_id) const
@@ -791,9 +917,13 @@ class SpellMgr
             return false;
         }
 
+        static bool IsProfessionOrRidingSpell(uint32 spellId);
         static bool IsProfessionSpell(uint32 spellId);
         static bool IsPrimaryProfessionSpell(uint32 spellId);
         bool IsPrimaryProfessionFirstRankSpell(uint32 spellId) const;
+
+        bool IsSkillBonusSpell(uint32 spellId) const;
+
 
         // Spell script targets
         SpellScriptTarget::const_iterator GetBeginSpellScriptTarget(uint32 spell_id) const
@@ -828,6 +958,15 @@ class SpellMgr
                 return NULL;
         }
 
+        PetLevelupSpellSet const* GetPetLevelupSpellList(uint32 petFamily) const
+        {
+            PetLevelupSpellMap::const_iterator itr = mPetLevelupSpellMap.find(petFamily);
+            if(itr != mPetLevelupSpellMap.end())
+                return &itr->second;
+            else
+                return NULL;
+        }
+
         // Modifiers
     public:
         static SpellMgr& Instance();
@@ -840,10 +979,12 @@ class SpellMgr
         void LoadSpellAffects();
         void LoadSpellElixirs();
         void LoadSpellProcEvents();
+        void LoadSpellBonusess();
         void LoadSpellTargetPositions();
         void LoadSpellThreats();
         void LoadSkillLineAbilityMap();
         void LoadSpellPetAuras();
+        void LoadPetLevelupSpellMap();
 
     private:
         SpellScriptTarget  mSpellScriptTarget;
@@ -855,8 +996,10 @@ class SpellMgr
         SpellAffectMap     mSpellAffectMap;
         SpellElixirMap     mSpellElixirs;
         SpellProcEventMap  mSpellProcEventMap;
+        SpellBonusMap      mSpellBonusMap;
         SkillLineAbilityMap mSkillLineAbilityMap;
         SpellPetAuraMap     mSpellPetAuraMap;
+        PetLevelupSpellMap mPetLevelupSpellMap;
 };
 
 #define spellmgr SpellMgr::Instance()

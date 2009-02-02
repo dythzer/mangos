@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ char const* localeNames[MAX_LOCALE] = {
   "ruRU"
 };
 
-LocaleConstant GetLocaleByName(std::string name)
+LocaleConstant GetLocaleByName(const std::string& name)
 {
     for(uint32 i = 0; i < MAX_LOCALE; ++i)
         if(name==localeNames[i])
