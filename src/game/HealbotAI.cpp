@@ -1029,6 +1029,103 @@ Item* HealbotAI::FindPoison() const {
 	return NULL;
 }
 
+/* // Doesn't work
+Item* HealbotAI::FindManaPot() const
+{
+    uint32 statType = 0;
+    int32  val = 0;
+
+    // list out items in main backpack
+	for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; slot++) 
+    {
+		Item* const pItem = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+		if (pItem)
+        {
+			const ItemPrototype* const pItemProto = pItem->GetProto();
+			if (!pItemProto || !m_bot->CanUseItem(pItemProto))
+				continue;
+            if (pItemProto->IsPotion()) 
+            {
+                ScalingStatDistributionEntry const *ssd = pItemProto->ScalingStatDistribution ? sScalingStatDistributionStore.LookupEntry(pItemProto->ScalingStatDistribution) : 0;
+                ScalingStatValuesEntry const *ssv = pItemProto->ScalingStatValue ? sScalingStatValuesStore.LookupEntry(m_bot->getLevel()) : 0;
+
+                for (int i = 0; i < MAX_ITEM_PROTO_STATS; ++i)
+                {
+                    if (ssd && ssv)
+                    {
+                        if (ssd->StatMod[i] < 0)
+                            continue;
+                        statType = ssd->StatMod[i];
+                        val = (ssv->getssdMultiplier(pItemProto->ScalingStatValue) * ssd->Modifier[i]) / 10000;
+                    }
+                    else
+                    {
+                        if (i >= pItemProto->StatsCount)
+                            continue;
+                        statType = pItemProto->ItemStat[i].ItemStatType;
+                        val = pItemProto->ItemStat[i].ItemStatValue;
+                    }
+
+                    if(val == 0)
+                        continue;
+
+                    if(statType == ITEM_MOD_MANA)
+                        return pItem;
+                }
+            }
+        }
+    }
+	// list out items in other removable backpacks
+	for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
+    {
+		const Bag* const pBag = (Bag*) m_bot->GetItemByPos(
+				INVENTORY_SLOT_BAG_0, bag);
+		if (pBag)
+        {
+			for (uint8 slot = 0; slot < pBag->GetBagSize(); ++slot)
+            {
+				Item* const pItem = m_bot->GetItemByPos(bag, slot);
+				if (pItem)
+                {
+					const ItemPrototype* const pItemProto = pItem->GetProto();
+					if (!pItemProto || !m_bot->CanUseItem(pItemProto))
+						continue;
+					if (pItemProto->IsPotion())
+                    {
+                        ScalingStatDistributionEntry const *ssd = pItemProto->ScalingStatDistribution ? sScalingStatDistributionStore.LookupEntry(pItemProto->ScalingStatDistribution) : 0;
+                        ScalingStatValuesEntry const *ssv = pItemProto->ScalingStatValue ? sScalingStatValuesStore.LookupEntry(m_bot->getLevel()) : 0;
+
+                        for (int i = 0; i < MAX_ITEM_PROTO_STATS; ++i)
+                        {
+                            if (ssd && ssv)
+                            {
+                                if (ssd->StatMod[i] < 0)
+                                    continue;
+                                statType = ssd->StatMod[i];
+                                val = (ssv->getssdMultiplier(pItemProto->ScalingStatValue) * ssd->Modifier[i]) / 10000;
+                            }
+                            else
+                            {
+                                if (i >= pItemProto->StatsCount)
+                                    continue;
+                                statType = pItemProto->ItemStat[i].ItemStatType;
+                                val = pItemProto->ItemStat[i].ItemStatValue;
+                            }
+
+                            if(val == 0)
+                                continue;
+
+                            if(statType == ITEM_MOD_MANA)
+                                return pItem;
+                        }
+                    }
+                }
+            }
+        }
+    }
+	return NULL;
+}*/
+
 void HealbotAI::InterruptCurrentCastingSpell() {
 	TellMaster("I'm interrupting my current spell!");
 	WorldPacket* const packet = new WorldPacket(CMSG_CANCEL_CAST, 5);
@@ -1202,7 +1299,7 @@ void HealbotAI::DoNextCombatManeuver(){
 
         if(UseDamageSpells == 2) // Wand only
         {
-            if(CanUseSpell(WAND))
+            if(m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_RANGED) && CanUseSpell(WAND))
                 CastSpell(WAND);
         }
         else if(UseDamageSpells == 1)
@@ -1426,13 +1523,6 @@ void HealbotAI::DoNonCombatActions(){
 		SetIgnoreUpdateTime(30);
 		return;
 	}
-
-	//(!m_master->HasAura(FORTITUDE,0) && CastSpell (FORTITUDE, *(m_master)) );
-
-
-
-
-
 
 	// buff and heal master's group
 	if (m_master->GetGroup()) {
@@ -1882,6 +1972,13 @@ void HealbotAI::HandleCommand(const std::string& text, Player& fromPlayer) {
             CastSpell(PWS, *(m_master));
     }
 
+    /*else if(text == "pot" || text == "mana pot")
+    {
+        Item* const pItem = m_bot->GetHealbotAI()->FindManaPot();
+        if (pItem)
+            m_bot->GetHealbotAI()->UseItem(*pItem);
+    }*/
+
 	else if (text == "follow" || text == "come")
 		Follow(*m_master);
 
@@ -2014,7 +2111,7 @@ void HealbotAI::HandleCommand(const std::string& text, Player& fromPlayer) {
 
 void HealbotAI::HealTarget(Unit &target, uint8 hp){
 	
-	if (hp < 25 && CanUseSpell(FLASH_HEAL) && GetManaPercent() >= 20)
+	if (hp < 25 && CanUseSpell(FLASH_HEAL) /*&& GetManaPercent() >= 20*/)
     {
 		if(CastSpell(FLASH_HEAL, target, 1.5))
             TellMaster("I'm casting flash heal.");
@@ -2024,7 +2121,7 @@ void HealbotAI::HealTarget(Unit &target, uint8 hp){
 		if(CastSpell(BINDING_HEAL, target, 1.5))
             TellMaster("I'm casting binding heal.");
 	}
-	else if (hp < 40 && CanUseSpell(PRAYER_OF_HEALING) && GetManaPercent() >= 54)
+	else if (hp < 40 && CanUseSpell(PRAYER_OF_HEALING) && GetManaPercent() >= 45)
     {
 		if(CastSpell(PRAYER_OF_HEALING, target, 3))
             TellMaster("I'm casting prayer of healing.");
@@ -2039,7 +2136,7 @@ void HealbotAI::HealTarget(Unit &target, uint8 hp){
 		if(CastSpell(HEAL, target, 3))
             TellMaster("I'm casting Greater Heal.");
 	}
-	else if (hp < 83 && CanUseSpell(FLASH_HEAL) && GetManaPercent() >= 20)
+	else if (hp < 83 && CanUseSpell(FLASH_HEAL) /*&& GetManaPercent() >= 20*/)
     {
 		if(CastSpell(FLASH_HEAL, target, 1.5))
             TellMaster("I'm casting Flash Heal.");

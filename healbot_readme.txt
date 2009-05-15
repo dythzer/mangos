@@ -24,6 +24,7 @@ cast <SPELL SUBSTRING>
 use <ITEM LINK>
 equip <ITEM LINK>
 rest (eat or drink if needed)
+pws (cast power word: shield on master)
 
 Note: Added botname before command if you have more than one bot spawned and only want to command one of them
 

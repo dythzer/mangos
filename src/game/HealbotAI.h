@@ -111,6 +111,7 @@ class MANGOS_DLL_SPEC HealbotAI {
         Item* FindBandage() const;
 		Item* FindPoison() const;
         Item* FindMount(uint32 matchingRidingSkill) const;
+        //Item* FindManaPot() const; //doesnt work yet
 
         // ******* Actions ****************************************
         // Your handlers can call these actions to make the bot do things.
