@@ -1286,11 +1286,17 @@ Ra.Secure = 1
 ###################################################################################################################
 # HEALBOT OPTIONS
 #
-#    Healbot.UseDamageSpells
+#    HealBot.UseDamageSpells
 #         0 - No damage, just heal
 #         1 - Use basic damage spells (not recommended yet)
 #         2 - Wand damage only (default)
 #
+#    HealBot.AggroWarning.Enable
+#         Enables or disables aggro warning from healbot when it is under attack
+#         1 - true (default)
+#         0 - false
+#
 ###################################################################################################################
 
 HealBot.UseDamageSpells = 2
+HealBot.AggroWarning.Enable = 1

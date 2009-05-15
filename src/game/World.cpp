@@ -942,6 +942,8 @@ void World::LoadConfigSettings(bool reload)
     if(m_configs[CONFIG_HEALBOT_ALLOW_DAMAGE] > 2)
         m_configs[CONFIG_HEALBOT_ALLOW_DAMAGE] = 2;
 
+    m_configs[CONFIG_HEALBOT_AGGRO_WARNING] = sConfig.GetBoolDefault("HealBot.AggroWarning.Enable", 1);
+
     m_VisibleUnitGreyDistance = sConfig.GetFloatDefault("Visibility.Distance.Grey.Unit", 1);
     if(m_VisibleUnitGreyDistance >  MAX_VISIBILITY_DISTANCE)
     {

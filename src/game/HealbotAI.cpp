@@ -1583,6 +1583,17 @@ void HealbotAI::UpdateAI(const uint32 p_time) {
 		m_targetGuidCommand = 0;
 	}
 
+    else if(!m_bot->getAttackers().empty())
+    {
+        if(GetHealthPercent() <= 60 && CanUseSpell(FADE) && /*!m_bot->HasAura(FADE, 0) &&*/ !m_bot->HasSpellCooldown(FADE)) // use fade below 60% hp
+        {
+            if(CastSpell(FADE))
+                TellMaster("I'm using Fade");
+        }
+        else
+            TellMaster("Help! I'm under attack.");
+    }
+
 	// handle combat
 	else if (m_combatOrder != ORDERS_NONE)
 		DoNextCombatManeuver();
