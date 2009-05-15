@@ -1288,7 +1288,7 @@ Ra.Secure = 1
 #
 #    Healbot.UseDamageSpells
 #         0 - No damage, just heal
-#         1 - Use basic damage spells
+#         1 - Use basic damage spells (not recommended yet)
 #         2 - Wand damage only (default)
 #
 ###################################################################################################################

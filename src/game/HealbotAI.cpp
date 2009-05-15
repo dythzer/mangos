@@ -2016,38 +2016,38 @@ void HealbotAI::HealTarget(Unit &target, uint8 hp){
 	
 	if (hp < 25 && CanUseSpell(FLASH_HEAL) && GetManaPercent() >= 20)
     {
-		TellMaster("I'm casting flash heal.");
-		CastSpell(FLASH_HEAL, target, 1.5);	
+		if(CastSpell(FLASH_HEAL, target, 1.5))
+            TellMaster("I'm casting flash heal.");
 	}
 	else if (hp < 33 && CanUseSpell(BINDING_HEAL) && GetManaPercent() >= 27)
     {
-		TellMaster("I'm casting binding heal.");
-		CastSpell(BINDING_HEAL, target, 1.5);
+		if(CastSpell(BINDING_HEAL, target, 1.5))
+            TellMaster("I'm casting binding heal.");
 	}
 	else if (hp < 40 && CanUseSpell(PRAYER_OF_HEALING) && GetManaPercent() >= 54)
     {
-		TellMaster("I'm casting prayer of healing.");
-		CastSpell(PRAYER_OF_HEALING, target, 3);	
+		if(CastSpell(PRAYER_OF_HEALING, target, 3))
+            TellMaster("I'm casting prayer of healing.");
 	}
 	else if (hp < 50 && CanUseSpell(CIRCLE_OF_HEALING) && GetManaPercent() >= 24)
     {
-		TellMaster("I'm casting circle of healing.");
-		CastSpell(CIRCLE_OF_HEALING, target, 1);
+		if(CastSpell(CIRCLE_OF_HEALING, target, 1))
+            TellMaster("I'm casting circle of healing.");
 	}
     else if (hp < 60 && CanUseSpell(HEAL) && GetManaPercent() >= 36)
     {
-		TellMaster("I'm casting Greater Heal.");
-		CastSpell(HEAL, target, 3);	
+		if(CastSpell(HEAL, target, 3))
+            TellMaster("I'm casting Greater Heal.");
 	}
 	else if (hp < 83 && CanUseSpell(FLASH_HEAL) && GetManaPercent() >= 20)
     {
-		TellMaster("I'm casting Flash Heal.");
-		CastSpell(FLASH_HEAL, target, 1.5);	
+		if(CastSpell(FLASH_HEAL, target, 1.5))
+            TellMaster("I'm casting Flash Heal.");
 	}
 	else if (hp < 90 && CanUseSpell(RENEW) && GetManaPercent() >= 15)
     {
-		TellMaster("I'm casting renew.");
-		CastSpell(RENEW, target, 1);
+		if(CastSpell(RENEW, target, 1))
+            TellMaster("I'm casting renew.");
 	}
 }
 
