@@ -284,7 +284,8 @@ void HealbotAI::HandleMasterIncomingPacket(const WorldPacket& packet,
 
 	// If master inspects one of his bots, give the master useful info in chat window
 	// such as inventory that can be equipped
-	case CMSG_INSPECT: {
+	case CMSG_INSPECT:
+    {
 		WorldPacket p(packet);
 		p.rpos(0); // reset reader
 		uint64 guid;
@@ -293,8 +294,8 @@ void HealbotAI::HandleMasterIncomingPacket(const WorldPacket& packet,
 		if (!bot)
 			return;
 		bot->GetHealbotAI()->SendNotEquipList(*bot);
+        break;
 	}
-
 		// handle emotes from the master
 		//case CMSG_EMOTE:
 	case CMSG_TEXT_EMOTE: {

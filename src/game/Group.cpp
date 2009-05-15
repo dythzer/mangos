@@ -563,7 +563,7 @@ void Group::GroupLoot(const uint64& playerGUID, Loot *loot, Creature *creature)
             for(GroupReference *itr = GetFirstMember(); itr != NULL; itr = itr->next())
             {
                 Player *member = itr->getSource();
-                if(!member || !member->GetSession())
+                if(!member || !member->GetSession() || member->GetHealbotAI()) // don't send loot roll to healbot
                     continue;
                 if ( i->AllowedForPlayer(member) )
                 {
