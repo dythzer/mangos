@@ -4391,6 +4391,21 @@ bool ChatHandler::HandleHealbotCommand(const char* args)
         return false;
     }
 
+    // check if character is priest, not sure if sql query is neccessary
+    QueryResult *result = CharacterDatabase.PQuery("SELECT class FROM characters WHERE guid='%d'", guid);
+    if (!result)
+        return false;
+    Field *fields = result->Fetch();
+    uint8 botclass = fields[0].GetUInt8();
+    delete result;
+
+    if(botclass != CLASS_PRIEST)
+    {
+        PSendSysMessage("Only priests can be used as healbot.");
+        SetSentErrorMessage(true);
+        return false;
+    }
+
     if(cmdStr == "add" || cmdStr == "login")
     {
         if (m_session->GetHealbot(guid) != NULL) {
