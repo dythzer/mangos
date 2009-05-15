@@ -279,7 +279,14 @@ void WorldSession::HandleGossipHelloOpcode( WorldPacket & recv_data )
     if(GetPlayer()->hasUnitState(UNIT_STAT_DIED))
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
 
-    if( unit->isArmorer() || unit->isCivilian() || unit->isQuestGiver() || unit->isServiceProvider())
+	if(unit->isBotGiver())
+	{
+		GetPlayer()->TalkedToCreature(unit->GetEntry(),unit->GetGUID());
+        unit->prepareGossipMenu(GetPlayer(),GOSSIP_OPTION_HEALBOT);
+        unit->sendPreparedGossip(GetPlayer());
+		unit->StopMoving();
+	}
+    else if( unit->isArmorer() || unit->isCivilian() || unit->isQuestGiver() || unit->isServiceProvider())
     {
         unit->StopMoving();
     }
@@ -336,6 +343,21 @@ void WorldSession::HandleGossipSelectOptionOpcode( WorldPacket & recv_data )
     // remove fake death
     if(GetPlayer()->hasUnitState(UNIT_STAT_DIED))
         GetPlayer()->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
+
+	if(unit->isBotGiver())
+	{
+		WorldSession * m_session = _player->GetSession();
+		uint64 guidlo = _player->PlayerTalkClass->GossipOptionSender(option);
+		if(m_session->GetHealbot(guidlo) != NULL)
+		{
+			m_session->LogoutHealbot(guidlo, true);
+		}
+		else if(m_session->GetHealbot(guidlo) == NULL)
+		{
+			m_session->AddHealbot(guidlo);
+		}
+		_player->PlayerTalkClass->CloseGossip();
+	}
 
     if(!code.empty())
     {

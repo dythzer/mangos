@@ -37,6 +37,9 @@
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
 
+// Healbot mod
+#include "HealbotAI.h"
+
 void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
 {
     CHECK_PACKET_SIZE(recv_data,4+4+1);
@@ -213,6 +216,14 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
                 }
             }
 
+            // Healbot mod: handle whispered command to bot
+            if (player->GetHealbotAI()) {
+                player->GetHealbotAI()->HandleCommand(msg, *GetPlayer());
+                GetPlayer()->m_speakTime = 0;
+                GetPlayer()->m_speakCount = 0;
+            }
+            else
+                // END Healbot mod
             GetPlayer()->Whisper(msg, lang,player->GetGUID());
         } break;
 
@@ -239,6 +250,18 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
             // so if player hasn't OriginalGroup and his player->GetGroup() is BG raid, then return
             if( !group && (!(group = GetPlayer()->GetGroup()) || group->isBGGroup()) )
                 return;
+
+            // Healbot mod: broadcast message to bot members
+            for(GroupReference* itr = group->GetFirstMember(); itr != NULL; itr=itr->next())
+            {
+                Player* player = itr->getSource();
+                if (player && player->GetHealbotAI()) {
+                    player->GetHealbotAI()->HandleCommand(msg, *GetPlayer());
+                    GetPlayer()->m_speakTime = 0;
+                    GetPlayer()->m_speakCount = 0;
+                }
+            }
+            // END Healbot mod
 
             WorldPacket data;
             ChatHandler::FillMessageData(&data, this, CHAT_MSG_PARTY, lang, NULL, 0, msg.c_str(),NULL);

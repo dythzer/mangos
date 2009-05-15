@@ -1170,6 +1170,14 @@
 				>
 			</File>
 			<File
+			    RelativePath="..\..\src\game\HealbotAI.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\HealbotAI.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\game\HomeMovementGenerator.cpp"
 				>
 			</File>

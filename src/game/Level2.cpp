@@ -4344,6 +4344,77 @@ bool ChatHandler::HandleRepairitemsCommand(const char* /*args*/)
     return true;
 }
 
+// Healbot
+bool ChatHandler::HandleHealbotCommand(const char* args)
+{
+    if(!m_session)
+    {
+        PSendSysMessage("You may only add bots from an active session");
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if(!*args)
+    {
+        PSendSysMessage("usage: add PLAYERNAME  or  remove PLAYERNAME");
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    char *cmd = strtok ((char*)args, " ");
+    char *charname = strtok (NULL, " ");
+    if(!cmd || !charname)
+    {
+        PSendSysMessage("usage: add PLAYERNAME  or  remove PLAYERNAME");
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    std::string cmdStr = cmd;
+    std::string charnameStr = charname;
+
+    if(!normalizePlayerName(charnameStr))
+        return false;
+
+    uint64 guid = objmgr.GetPlayerGUIDByName(charnameStr.c_str());
+    if(guid == 0 || (guid == m_session->GetPlayer()->GetGUID()))
+    {
+        SendSysMessage(LANG_PLAYER_NOT_FOUND);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    uint32 accountId = objmgr.GetPlayerAccountIdByGUID(guid);
+    if(accountId != m_session->GetAccountId()) {
+        PSendSysMessage("You may only add bots from the same account.");
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if(cmdStr == "add" || cmdStr == "login")
+    {
+        if (m_session->GetHealbot(guid) != NULL) {
+            PSendSysMessage("Bot already exists in world.");
+            SetSentErrorMessage(true);
+            return false;
+        }
+        m_session->AddHealbot(guid);
+        PSendSysMessage("Bot added successfully.");
+    }
+    else if(cmdStr == "remove" || cmdStr == "logout" || cmdStr == "del")
+    {
+        if (m_session->GetHealbot(guid) == NULL) {
+            PSendSysMessage("Bot can not be removed because bot does not exist in world.");
+            SetSentErrorMessage(true);
+            return false;
+        }
+        m_session->LogoutHealbot(guid, true);
+        PSendSysMessage("Bot removed successfully.");
+    }
+
+    return true;
+}
+
 bool ChatHandler::HandleWaterwalkCommand(const char* args)
 {
     if(!*args)

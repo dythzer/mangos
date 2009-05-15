@@ -1282,3 +1282,15 @@ Ra.IP = 0.0.0.0
 Ra.Port = 3443
 Ra.MinLevel = 3
 Ra.Secure = 1
+
+###################################################################################################################
+# HEALBOT OPTIONS
+#
+#    Healbot.UseDamageSpells
+#         0 - No damage, just heal
+#         1 - Use basic damage spells
+#         2 - Wand damage only (default)
+#
+###################################################################################################################
+
+HealBot.UseDamageSpells = 2

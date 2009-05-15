@@ -19,6 +19,7 @@
 #include "Common.h"
 #include "Database/DatabaseEnv.h"
 #include "World.h"
+#include "ObjectMgr.h"
 #include "Player.h"
 #include "Opcodes.h"
 #include "Chat.h"
@@ -261,3 +262,4 @@ bool ChatHandler::HandleServerMotdCommand(const char* /*args*/)
     PSendSysMessage(LANG_MOTD_CURRENT, sWorld.GetMotd());
     return true;
 }
+

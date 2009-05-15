@@ -38,6 +38,9 @@
 #include "ArenaTeam.h"
 #include "Language.h"
 
+// Healbot mod:
+#include "HealbotAI.h"
+
 class LoginQueryHolder : public SqlQueryHolder
 {
     private:
@@ -112,6 +115,48 @@ class CharacterHandler
                 return;
             }
             session->HandlePlayerLogin((LoginQueryHolder*)holder);
+        }
+        // Healbot mod: is different from the normal HandlePlayerLoginCallback in that it
+        // sets up the bot's world session and also stores the pointer to the bot player in the master's
+        // world session m_Healbots map
+        void HandleHealbotLoginCallback(QueryResult * /*dummy*/, SqlQueryHolder * holder)
+        {
+            if (!holder) return;
+
+            LoginQueryHolder* lqh = (LoginQueryHolder*) holder;
+
+            WorldSession* masterSession = sWorld.FindSession(lqh->GetAccountId());
+
+            if (! masterSession)
+            {
+                delete holder;
+                return;
+            }
+
+            // This WorldSession is owned by the bot player object
+            // it will deleted in the Player class constructor for Healbots only
+            WorldSession *botSession = new WorldSession(lqh->GetAccountId(), NULL, SEC_PLAYER, true, 0, LOCALE_enUS);
+            botSession->m_Address = "bot";
+            botSession->m_expansion = 2;
+
+            uint64 guid = lqh->GetGuid();
+
+            botSession->HandlePlayerLogin(lqh);
+            Player* botPlayer = botSession->GetPlayer();
+
+            // give the bot some AI, object is owned by the player class
+            HealbotAI* ai = new HealbotAI(masterSession->GetPlayer(), botPlayer);
+            botPlayer->SetHealbotAI(ai);
+
+            // tell the world session that they now manage this new bot
+            (masterSession->m_Healbots)[guid] = botPlayer;
+
+            // if bot is in a group and master is not in group then
+            // have bot leave their group
+            if (botPlayer->GetGroup() &&
+                (masterSession->GetPlayer()->GetGroup() == NULL ||
+                masterSession->GetPlayer()->GetGroup()->IsMember(guid) == false))
+                botPlayer->RemoveFromGroup();
         }
 } chrHandler;
 
@@ -1298,4 +1343,20 @@ void WorldSession::HandleCharCustomize(WorldPacket& recv_data)
     data << uint8(hairColor);
     data << uint8(facialHair);
     SendPacket(&data);
+}
+
+// Healbot mod - add new player bot for this master. This definition must appear in this file
+// because it utilizes the CharacterHandler class which isn't accessible outside this file
+void WorldSession::AddHealbot(uint64 playerGuid)
+{
+    // has bot already been added?
+    if (GetHealbot(playerGuid) != 0) return;
+
+    LoginQueryHolder *holder = new LoginQueryHolder(GetAccountId(), playerGuid);
+    if(!holder->Initialize())
+    {
+        delete holder;                                      // delete all unprocessed queries
+        return;
+    }
+    CharacterDatabase.DelayQueryHolder(&chrHandler, &CharacterHandler::HandleHealbotLoginCallback, holder);
 }

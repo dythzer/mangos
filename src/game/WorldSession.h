@@ -93,6 +93,9 @@ enum PartyResult
     PARTY_RESULT_INVITE_RESTRICTED    = 13
 };
 
+// Healbot mod
+typedef UNORDERED_MAP<uint64, Player*> HealbotMap;
+
 /// Player session in the World
 class MANGOS_DLL_SPEC WorldSession
 {
@@ -100,6 +103,13 @@ class MANGOS_DLL_SPEC WorldSession
     public:
         WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, uint8 expansion, time_t mute_time, LocaleConstant locale);
         ~WorldSession();
+
+        // Healbot mod
+        void AddHealbot(uint64 guid);
+        void LogoutHealbot(uint64 guid, bool Save);
+        Player* GetHealbot (uint64 guid) const;
+        HealbotMap::const_iterator GetHealbotsBegin() const { return m_Healbots.begin(); }
+        HealbotMap::const_iterator GetHealbotsEnd()   const { return m_Healbots.end();   }
 
         bool PlayerLoading() const { return m_playerLoading; }
         bool PlayerLogout() const { return m_playerLogout; }
@@ -714,6 +724,9 @@ class MANGOS_DLL_SPEC WorldSession
         AccountData m_accountData[NUM_ACCOUNT_DATA_TYPES];
         AddonsList m_addonsList;
         ACE_Based::LockedQueue<WorldPacket*, ACE_Thread_Mutex> _recvQueue;
+
+        // Healbots mod
+        HealbotMap m_Healbots;     
 };
 #endif
 /// @}

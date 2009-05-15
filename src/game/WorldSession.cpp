@@ -37,6 +37,9 @@
 #include "SocialMgr.h"
 #include "zlib/zlib.h"
 
+// Healbot mod
+#include "HealbotAI.h"
+
 /// WorldSession constructor
 WorldSession::WorldSession(uint32 id, WorldSocket *sock, AccountTypes sec, uint8 expansion, time_t mute_time, LocaleConstant locale) :
 LookingForGroup_auto_join(false), LookingForGroup_auto_add(false), m_muteTime(mute_time),
@@ -54,6 +57,10 @@ _logoutTime(0), m_inQueue(false), m_playerLoading(false), m_playerLogout(false),
 /// WorldSession destructor
 WorldSession::~WorldSession()
 {
+    // Healbot mod: log out any Healbots owned in this WorldSession
+    while (! m_Healbots.empty())
+        LogoutHealbot(m_Healbots.begin()->first, true);
+
     ///- unload player if not unloaded
     if (_player)
         LogoutPlayer (true);
@@ -89,6 +96,13 @@ char const* WorldSession::GetPlayerName() const
 /// Send a packet to the client
 void WorldSession::SendPacket(WorldPacket const* packet)
 {
+    // Healbot mod: send packet to bot AI
+    if (GetPlayer() && GetPlayer()->GetHealbotAI())
+        GetPlayer()->GetHealbotAI()->HandleBotOutgoingPacket(*packet);
+
+    else if (! m_Healbots.empty())
+        HealbotAI::HandleMasterOutgoingPacket(*packet, *this);
+
     if (!m_Socket)
         return;
 
@@ -183,6 +197,11 @@ bool WorldSession::Update(uint32 /*diff*/)
                     else if(_player->IsInWorld())
                         (this->*opHandle.handler)(*packet);
                     // lag can cause STATUS_LOGGEDIN opcodes to arrive after the player started a transfer
+
+                    // Healbot mod: if this player has bots let the bot AI see the masters packet
+                    if (! m_Healbots.empty())
+                        HealbotAI::HandleMasterIncomingPacket(*packet, *this);
+
                     break;
                 case STATUS_TRANSFER_PENDING:
                     if(!_player)
@@ -214,6 +233,25 @@ bool WorldSession::Update(uint32 /*diff*/)
         delete packet;
     }
 
+    // Healbot mod - Process player bot packets
+    // The HealbotAI class adds to the packet queue to simulate a real player
+    // since Healbots are known to the World obj only by its master's WorldSession object
+    // we need to process all master's bot's packets.
+    for (HealbotMap::const_iterator itr = GetHealbotsBegin(); itr != GetHealbotsEnd(); ++itr) {
+        Player* const botPlayer = itr->second;
+        WorldSession* const pBotWorldSession = botPlayer->GetSession();
+        if (botPlayer->IsBeingTeleportedFar())
+            pBotWorldSession->HandleMoveWorldportAckOpcode();
+        else if (botPlayer->IsInWorld()) {
+            while (! pBotWorldSession->_recvQueue.empty()) {
+                WorldPacket* const packet = pBotWorldSession->_recvQueue.next();
+                OpcodeHandler& opHandle = opcodeTable[packet->GetOpcode()];
+                (pBotWorldSession->*opHandle.handler)(*packet);
+                delete packet;
+            }
+        }
+    }
+
     ///- Cleanup socket pointer if need
     if (m_Socket && m_Socket->IsClosed ())
     {
@@ -235,6 +273,10 @@ bool WorldSession::Update(uint32 /*diff*/)
 /// %Log the player out
 void WorldSession::LogoutPlayer(bool Save)
 {
+    // Healbot mod: log out all player bots owned by this toon
+    while (! m_Healbots.empty())
+        LogoutHealbot(m_Healbots.begin()->first, Save);
+
     // finish pending transfers before starting the logout
     while(_player && _player->IsBeingTeleportedFar())
         HandleMoveWorldportAckOpcode();
@@ -319,6 +361,7 @@ void WorldSession::LogoutPlayer(bool Save)
         ///- Reset the online field in the account table
         // no point resetting online in character table here as Player::SaveToDB() will set it to 1 since player has not been removed from world at this stage
         //No SQL injection as AccountID is uint32
+        if (! _player->IsHealbot())
         loginDatabase.PExecute("UPDATE account SET online = 0 WHERE id = '%u'", GetAccountId());
 
         ///- If the player is in a guild, update the guild roster and broadcast a logout message to other guild members
@@ -384,6 +427,9 @@ void WorldSession::LogoutPlayer(bool Save)
         _player->CleanupsBeforeDelete();                    // do some cleanup before deleting to prevent crash at crossreferences to already deleted data
 
         sSocialMgr.RemovePlayerSocial (_player->GetGUIDLow ());
+
+        uint32 guid = _player->GetGUIDLow();
+
         delete _player;
         _player = NULL;
 
@@ -393,8 +439,7 @@ void WorldSession::LogoutPlayer(bool Save)
 
         ///- Since each account can only have one online character at any given time, ensure all characters for active account are marked as offline
         //No SQL injection as AccountId is uint32
-        CharacterDatabase.PExecute("UPDATE characters SET online = 0 WHERE account = '%u'",
-            GetAccountId());
+        CharacterDatabase.PExecute("UPDATE characters SET online = 0 WHERE guid = '%u'", guid);
         sLog.outDebug( "SESSION: Sent SMSG_LOGOUT_COMPLETE Message" );
     }
 
@@ -729,4 +774,25 @@ void WorldSession::SendAddonsInfo()
     }*/
 
     SendPacket(&data);
+}
+
+// Healbot mod: logs out a Healbot.
+void WorldSession::LogoutHealbot(uint64 guid, bool Save)
+{
+    Player* botPlayerPtr = GetHealbot(guid);
+
+    if (botPlayerPtr)
+    {
+        WorldSession * botWorldSessionPtr = botPlayerPtr->m_session;
+        m_Healbots.erase(guid);    // deletes bot player ptr inside this WorldSession HealbotMap
+        botWorldSessionPtr->LogoutPlayer(Save); // this will delete the bot Player object and HealbotAI object
+        delete botWorldSessionPtr;  // finally delete the bot's WorldSession
+    }
+}
+
+// Healbot mod: Gets a player bot Player object for this WorldSession master
+Player* WorldSession::GetHealbot(uint64 playerGuid) const
+{
+    HealbotMap::const_iterator it = m_Healbots.find(playerGuid);
+    return (it == m_Healbots.end()) ? 0 : it->second;
 }

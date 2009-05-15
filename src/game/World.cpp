@@ -938,6 +938,10 @@ void World::LoadConfigSettings(bool reload)
 
     m_configs[CONFIG_INSTANT_LOGOUT] = sConfig.GetIntDefault("InstantLogout", SEC_MODERATOR);
 
+	m_configs[CONFIG_HEALBOT_ALLOW_DAMAGE] = sConfig.GetIntDefault("HealBot.UseDamageSpells", 2);
+    if(m_configs[CONFIG_HEALBOT_ALLOW_DAMAGE] > 2)
+        m_configs[CONFIG_HEALBOT_ALLOW_DAMAGE] = 2;
+
     m_VisibleUnitGreyDistance = sConfig.GetFloatDefault("Visibility.Distance.Grey.Unit", 1);
     if(m_VisibleUnitGreyDistance >  MAX_VISIBILITY_DISTANCE)
     {
