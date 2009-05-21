@@ -40,7 +40,7 @@ class MANGOS_DLL_SPEC HealbotAI {
 		// all combat actions go here
 		//void DoNextCombatManeuver(Unit*);
 
-		// all non combat actions go here, ex buffs, heals, rezzes
+		// all non combat actions go here, ex buffs, heals, RESURRECTes
 		void DoNonCombatActions();
 
 		// buff a specific player, usually a real PC who is not in group
@@ -156,7 +156,7 @@ class MANGOS_DLL_SPEC HealbotAI {
 	void HealTarget (Unit& target, uint8 hp);
 
 	// holy
-	uint32 RENEW, HEAL, FLASH_HEAL, REZZ, SMITE, CLEARCASTING, HOLY_NOVA, HOLY_FIRE, DESPERATE_PRAYER, PRAYER_OF_HEALING, CIRCLE_OF_HEALING, BINDING_HEAL, PRAYER_OF_MENDING;
+	uint32 RENEW, HEAL, FLASH_HEAL, RESURRECT, SMITE, CLEARCASTING, HOLY_NOVA, HOLY_FIRE, DESPERATE_PRAYER, PRAYER_OF_HEALING, CIRCLE_OF_HEALING, BINDING_HEAL, PRAYER_OF_MENDING;
 
 	// shadowmagic
 	uint32 FADE, PAIN, MIND_BLAST, SCREAM, MIND_FLAY, DEVOURING_PLAGUE, SHADOW_PROTECTION, VAMPIRIC_TOUCH, PRAYER_OF_SHADOW_PROTECTION, SHADOWFIEND, MIND_SEAR;

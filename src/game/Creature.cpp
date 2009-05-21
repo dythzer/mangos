@@ -268,7 +268,7 @@ bool Creature::UpdateEntry(uint32 Entry, uint32 team, const CreatureData *data )
 	if(isBotGiver())
 		SetUInt32Value(UNIT_NPC_FLAGS, 1);
 	else
-    SetUInt32Value(UNIT_NPC_FLAGS,GetCreatureInfo()->npcflag);
+        SetUInt32Value(UNIT_NPC_FLAGS,GetCreatureInfo()->npcflag);
 
     SetAttackTime(BASE_ATTACK,  GetCreatureInfo()->baseattacktime);
     SetAttackTime(OFF_ATTACK,   GetCreatureInfo()->baseattacktime);
@@ -2217,7 +2217,7 @@ void Creature::LoadBotMenu(Player *pPlayer)
 bool Creature::isBotGiver()
 {
 	std::string scriptname = GetScriptName();
-	if( scriptname == "healbot_giver" )
+	if(scriptname == "healbot_giver")
 		return true;
 	return false;
 }

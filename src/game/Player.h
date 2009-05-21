@@ -2063,7 +2063,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 		// Healbot:
         void SetHealbotAI(HealbotAI * ai);
         HealbotAI* GetHealbotAI() { return m_HealbotAI; }
-        bool IsHealbot() { return (GetSession()->GetRemoteAddress() == "bot"); }
+        bool IsHealbot() { return (GetSession()->GetRemoteAddress() == "healbot"); }
 
     protected:
 

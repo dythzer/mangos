@@ -38,7 +38,6 @@
 #include "ArenaTeam.h"
 #include "Language.h"
 
-// Healbot mod:
 #include "HealbotAI.h"
 
 class LoginQueryHolder : public SqlQueryHolder
@@ -121,13 +120,13 @@ class CharacterHandler
         // world session m_Healbots map
         void HandleHealbotLoginCallback(QueryResult * /*dummy*/, SqlQueryHolder * holder)
         {
-            if (!holder) return;
+            if(!holder) return;
 
             LoginQueryHolder* lqh = (LoginQueryHolder*) holder;
 
             WorldSession* masterSession = sWorld.FindSession(lqh->GetAccountId());
 
-            if (! masterSession)
+            if(!masterSession)
             {
                 delete holder;
                 return;
@@ -136,8 +135,8 @@ class CharacterHandler
             // This WorldSession is owned by the bot player object
             // it will deleted in the Player class constructor for Healbots only
             WorldSession *botSession = new WorldSession(lqh->GetAccountId(), NULL, SEC_PLAYER, true, 0, LOCALE_enUS);
-            botSession->m_Address = "bot";
-            botSession->m_expansion = 2;
+            botSession->m_Address = "healbot";
+            botSession->m_expansion = 2; // wotlk expansion
 
             uint64 guid = lqh->GetGuid();
 
@@ -153,8 +152,7 @@ class CharacterHandler
 
             // if bot is in a group and master is not in group then
             // have bot leave their group
-            if (botPlayer->GetGroup() &&
-                (masterSession->GetPlayer()->GetGroup() == NULL ||
+            if (botPlayer->GetGroup() && (masterSession->GetPlayer()->GetGroup() == NULL ||
                 masterSession->GetPlayer()->GetGroup()->IsMember(guid) == false))
                 botPlayer->RemoveFromGroup();
         }
@@ -1350,7 +1348,8 @@ void WorldSession::HandleCharCustomize(WorldPacket& recv_data)
 void WorldSession::AddHealbot(uint64 playerGuid)
 {
     // has bot already been added?
-    if (GetHealbot(playerGuid) != 0) return;
+    if(GetHealbot(playerGuid) != 0)
+        return;
 
     LoginQueryHolder *holder = new LoginQueryHolder(GetAccountId(), playerGuid);
     if(!holder->Initialize())
@@ -1358,5 +1357,6 @@ void WorldSession::AddHealbot(uint64 playerGuid)
         delete holder;                                      // delete all unprocessed queries
         return;
     }
+
     CharacterDatabase.DelayQueryHolder(&chrHandler, &CharacterHandler::HandleHealbotLoginCallback, holder);
 }

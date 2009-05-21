@@ -37,7 +37,6 @@
 #include "SocialMgr.h"
 #include "zlib/zlib.h"
 
-// Healbot mod
 #include "HealbotAI.h"
 
 /// WorldSession constructor
@@ -58,7 +57,7 @@ _logoutTime(0), m_inQueue(false), m_playerLoading(false), m_playerLogout(false),
 WorldSession::~WorldSession()
 {
     // Healbot mod: log out any Healbots owned in this WorldSession
-    while (! m_Healbots.empty())
+    while(!m_Healbots.empty())
         LogoutHealbot(m_Healbots.begin()->first, true);
 
     ///- unload player if not unloaded

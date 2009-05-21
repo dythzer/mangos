@@ -14,7 +14,8 @@
 #include "SharedDefines.h"
 
 // returns a float in range of..
-float rand_float(float low, float high) {
+float rand_float(float low, float high)
+{
 	return (rand() / (static_cast<float> (RAND_MAX) + 1.0)) * (high - low) + low;
 }
 
@@ -26,14 +27,17 @@ float rand_float(float low, float high) {
  * there will be only 3 words. The first word is shifted to the left 0 times,
  * the second is shifted 3 times, and the third is shifted 6.
  */
-uint64 extractGuid(WorldPacket& packet) {
+uint64 extractGuid(WorldPacket& packet)
+{
 	uint8 mask;
 	packet >> mask;
 	uint64 guid = 0;
 	uint8 bit = 0;
 	uint8 testMask = 1;
-	while (true) {
-		if (mask & testMask) {
+	while (true)
+    {
+		if (mask & testMask)
+        {
 			uint8 word;
 			packet >> word;
 			guid += (word << bit);
@@ -46,13 +50,12 @@ uint64 extractGuid(WorldPacket& packet) {
 	return guid;
 }
 
-HealbotAI::HealbotAI(Player* const master, Player* const bot) :
-	m_master(master), m_bot(bot), m_ignoreAIUpdatesUntilTime(0), m_combatOrder(
-			ORDERS_NONE), m_ScenarioType(SCENARIO_PVEEASY),
-			m_TimeDoneEating(0), m_TimeDoneDrinking(0),
-			m_CurrentlyCastingSpellId(0), m_IsFollowingMaster(true),
-			m_spellIdCommand(0), m_targetGuidCommand(0) {
+HealbotAI::HealbotAI(Player* const master, Player* const bot) : m_master(master), m_bot(bot), m_ignoreAIUpdatesUntilTime(0),
+m_combatOrder(ORDERS_NONE), m_ScenarioType(SCENARIO_PVEEASY), m_TimeDoneEating(0), m_TimeDoneDrinking(0), m_CurrentlyCastingSpellId(0),
+m_IsFollowingMaster(true), m_spellIdCommand(0), m_targetGuidCommand(0)
+{
 
+    // TODO: DefineSpells() instead of get spell id from string
 
     //DISCIPLINE
     if((FORTITUDE = getSpellId("prayer of fortitude"))==1)
@@ -70,18 +73,16 @@ HealbotAI::HealbotAI(Player* const master, Player* const bot) :
     MASS_DISPEL                       = getSpellId("mass dispel");
 			
     //HOLY
-    if((HEAL = getSpellId ("greater heal"))>0) {
-		HEAL = getSpellId("greater heal");
-	}
-	else if((HEAL = getSpellId ("heal"))>0 && (HEAL = getSpellId ("greater heal"))==0) {
+    if((HEAL = getSpellId ("greater heal"))>0)
+        HEAL = getSpellId("greater heal");
+	else if((HEAL = getSpellId ("heal"))>0 && (HEAL = getSpellId ("greater heal")) == 0)
 		HEAL = getSpellId("heal");
-	}
-	else if((HEAL = getSpellId ("greater heal"))==0 && (HEAL = getSpellId ("heal"))==0) {
+	else if((HEAL = getSpellId ("greater heal"))==0 && (HEAL = getSpellId ("heal")) == 0)
 		HEAL = getSpellId("lesser heal");
-	}
+
 	RENEW                             = getSpellId("renew");
 	FLASH_HEAL                        = getSpellId("flash heal");
-	REZZ                              = getSpellId("resurrection");
+	RESURRECT                         = getSpellId("resurrection");
 	SMITE                             = getSpellId("smite");
 	CLEARCASTING                      = getSpellId("clearcasting");
 	HOLY_NOVA                         = getSpellId("holy nova");
@@ -110,7 +111,8 @@ HealbotAI::~HealbotAI() {}
 
 // finds spell ID for matching substring args
 // in priority of full text match, spells not taking reagents, and highest rank
-uint32 HealbotAI::getSpellId(const char* args) const {
+uint32 HealbotAI::getSpellId(const char* args) const
+{
 	if (!*args)
 		return 0;
 
@@ -130,7 +132,8 @@ uint32 HealbotAI::getSpellId(const char* args) const {
 	bool foundMatchUsesNoReagents = false;
 
 	for (PlayerSpellMap::iterator itr = m_bot->GetSpellMap().begin(); itr
-			!= m_bot->GetSpellMap().end(); ++itr) {
+			!= m_bot->GetSpellMap().end(); ++itr)
+    {
 		uint32 spellId = itr->first;
 
 		if (itr->second->state == PLAYERSPELL_REMOVED || itr->second->disabled
@@ -158,7 +161,7 @@ uint32 HealbotAI::getSpellId(const char* args) const {
 			} else
 				useThisSpell = false;
 		}
-		if (useThisSpell) {
+		if (useThisSpell){
 			foundSpellId = spellId;
 			foundExactMatch = isExactMatch;
 			foundMatchUsesNoReagents = usesNoReagents;
@@ -172,8 +175,8 @@ uint32 HealbotAI::getSpellId(const char* args) const {
  * Send a list of equipment that is in bot's inventor that is currently unequipped.
  * This is called when the master is inspecting the bot.
  */
-void HealbotAI::SendNotEquipList(Player& player) {
-
+void HealbotAI::SendNotEquipList(Player& player)
+{
 	// find all unequipped items and put them in
 	// a vector of dynamically created lists where the vector index is from 0-18
 	// and the list contains Item* that can be equipped to that slot
@@ -186,14 +189,14 @@ void HealbotAI::SendNotEquipList(Player& player) {
 		equip[i] = NULL;
 
 	// list out items in main backpack
-	for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; slot++) {
+	for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; slot++)
+    {
 		Item* const pItem = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
 		if (!pItem)
 			continue;
 
 		uint16 dest;
-		uint8 msg =
-				m_bot->CanEquipItem(NULL_SLOT, dest, pItem, !pItem->IsBag());
+		uint8 msg = m_bot->CanEquipItem(NULL_SLOT, dest, pItem, !pItem->IsBag());
 		if (msg != EQUIP_ERR_OK)
 			continue;
 
@@ -212,18 +215,19 @@ void HealbotAI::SendNotEquipList(Player& player) {
 	}
 
 	// list out items in other removable backpacks
-	for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag) {
-		const Bag* const pBag = (Bag*) m_bot->GetItemByPos(
-				INVENTORY_SLOT_BAG_0, bag);
-		if (pBag) {
-			for (uint8 slot = 0; slot < pBag->GetBagSize(); ++slot) {
+	for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
+    {
+		const Bag* const pBag = (Bag*) m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, bag);
+		if (pBag)
+        {
+			for (uint8 slot = 0; slot < pBag->GetBagSize(); ++slot)
+            {
 				Item* const pItem = m_bot->GetItemByPos(bag, slot);
 				if (!pItem)
 					continue;
 
 				uint16 equipSlot;
-				uint8 msg = m_bot->CanEquipItem(NULL_SLOT, equipSlot, pItem,
-						!pItem->IsBag());
+				uint8 msg = m_bot->CanEquipItem(NULL_SLOT, equipSlot, pItem, !pItem->IsBag());
 				if (msg != EQUIP_ERR_OK)
 					continue;
 				if (!(equipSlot >= 0 && equipSlot < 19))
@@ -248,14 +252,15 @@ void HealbotAI::SendNotEquipList(Player& player) {
 			"tabard" };
 
 	// now send client all items that can be equipped by slot
-	for (uint8 equipSlot = 0; equipSlot < 19; ++equipSlot) {
+	for (uint8 equipSlot = 0; equipSlot < 19; ++equipSlot)
+    {
 		if (equip[equipSlot] == NULL)
 			continue;
 		std::list<Item*>* itemListForEqSlot = equip[equipSlot];
 		std::ostringstream out;
 		out << descr[equipSlot] << ": ";
-		for (std::list<Item*>::iterator it = itemListForEqSlot->begin(); it
-				!= itemListForEqSlot->end(); ++it) {
+		for (std::list<Item*>::iterator it = itemListForEqSlot->begin(); it != itemListForEqSlot->end(); ++it)
+        {
 			const ItemPrototype* const pItemProto = (*it)->GetProto();
 			out << " |cffffffff|Hitem:" << pItemProto->ItemId
 					<< ":0:0:0:0:0:0:0" << "|h[" << pItemProto->Name1
@@ -267,8 +272,8 @@ void HealbotAI::SendNotEquipList(Player& player) {
 	}
 }
 
-void HealbotAI::HandleMasterOutgoingPacket(const WorldPacket& packet,
-		WorldSession& masterSession) {
+void HealbotAI::HandleMasterOutgoingPacket(const WorldPacket& packet, WorldSession& masterSession)
+{
 	/*
 	 const char* oc = LookupOpcodeName(packet.GetOpcode());
 
@@ -278,10 +283,10 @@ void HealbotAI::HandleMasterOutgoingPacket(const WorldPacket& packet,
 	 */
 }
 
-void HealbotAI::HandleMasterIncomingPacket(const WorldPacket& packet,
-		WorldSession& masterSession) {
-	switch (packet.GetOpcode()) {
-
+void HealbotAI::HandleMasterIncomingPacket(const WorldPacket& packet, WorldSession& masterSession)
+{
+	switch(packet.GetOpcode())
+    {
 	// If master inspects one of his bots, give the master useful info in chat window
 	// such as inventory that can be equipped
 	case CMSG_INSPECT:
@@ -298,7 +303,8 @@ void HealbotAI::HandleMasterIncomingPacket(const WorldPacket& packet,
 	}
 		// handle emotes from the master
 		//case CMSG_EMOTE:
-	case CMSG_TEXT_EMOTE: {
+	case CMSG_TEXT_EMOTE:
+    {
 		WorldPacket p(packet);
 		p.rpos(0); // reset reader
 		uint32 emoteNum;
@@ -310,17 +316,9 @@ void HealbotAI::HandleMasterIncomingPacket(const WorldPacket& packet,
 		 ChatHandler ch(masterSession.GetPlayer());
 		 ch.SendSysMessage(out.str().c_str());
 		 */
-		switch (emoteNum) {
 
-		case TEXTEMOTE_BOW: {
-			// Buff anyone who bows before me. Useful for players not in bot's group
-			// How do I get correct target???
-			//Player* const pPlayer = masterSession.GetHealbot(masterSession.GetPlayer()->GetSelection());
-			//if (pPlayer->GetHealbotAI()->GetClassAI())
-			//	pPlayer->GetHealbotAI()->GetClassAI()->BuffPlayer(pPlayer);
-			return;
-		}
-
+		switch (emoteNum)
+        {
 		case TEXTEMOTE_BONK: {
 			Player* const pPlayer = masterSession.GetHealbot(
 					masterSession.GetPlayer()->GetSelection());
@@ -374,53 +372,18 @@ void HealbotAI::HandleMasterIncomingPacket(const WorldPacket& packet,
 		}
 
 		case TEXTEMOTE_EAT:
-		case TEXTEMOTE_DRINK: {
-			for (HealbotMap::const_iterator it =
-					masterSession.GetHealbotsBegin(); it
-					!= masterSession.GetHealbotsEnd(); ++it) {
-				Player* const bot = it->second;
-				bot->GetHealbotAI()->Rest();
-			}
-			return;
-		}
-
-			// emote to stay
-		/*case TEXTEMOTE_STAND: {
-			Player* const bot = masterSession.GetHealbot(
-					masterSession.GetPlayer()->GetSelection());
-			if (bot)
-				bot->GetHealbotAI()->Stay();
-			else {
-				for (HealbotMap::const_iterator it =
-						masterSession.GetHealbotsBegin(); it
-						!= masterSession.GetHealbotsEnd(); ++it) {
-					Player* const bot = it->second;
-					bot->GetHealbotAI()->Stay();
-				}
-			}
-			return;
-		}*/
-
-			// 324 is the followme emote (not defined in enum)
-			// if master has bot selected then only bot follows, else all bots follow
-		/*case 324:
-		case TEXTEMOTE_WAVE: {
-			Player* const bot = masterSession.GetHealbot(
-					masterSession.GetPlayer()->GetSelection());
-			if (bot)
-				bot->GetHealbotAI()->Follow(*masterSession.GetPlayer());
-			else {
-				for (HealbotMap::const_iterator it =
-						masterSession.GetHealbotsBegin(); it
-						!= masterSession.GetHealbotsEnd(); ++it) {
-					Player* const bot = it->second;
-					bot->GetHealbotAI()->Follow(*masterSession.GetPlayer());
-				}
-			}
-			return;
-		}*/
-		}
-	}
+		case TEXTEMOTE_DRINK:
+            {
+			    for (HealbotMap::const_iterator it = masterSession.GetHealbotsBegin(); it
+					    != masterSession.GetHealbotsEnd(); ++it) 
+                {
+				    Player* const bot = it->second;
+				    bot->GetHealbotAI()->Rest();
+			    }
+			    return;
+            }
+        }
+    }
 		/*
 
 		 default: {
@@ -433,12 +396,12 @@ void HealbotAI::HandleMasterIncomingPacket(const WorldPacket& packet,
 		 sLog.outError(out.str().c_str());
 		 }
 		 */
-
-	}
+    }
 }
 
 // handle outgoing packets the server would send to the client
-void HealbotAI::HandleBotOutgoingPacket(const WorldPacket& packet) {
+void HealbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
+{
 	switch (packet.GetOpcode()) {
 	case SMSG_DUEL_WINNER: {
 		m_bot->HandleEmoteCommand(EMOTE_ONESHOT_APPLAUD);
@@ -758,81 +721,100 @@ void HealbotAI::HandleBotOutgoingPacket(const WorldPacket& packet) {
 	}
 }
 
-uint8 HealbotAI::GetHealthPercent(const Unit& target) const {
+uint8 HealbotAI::GetHealthPercent(const Unit& target) const
+{
 	return (static_cast<float> (target.GetHealth()) / target.GetMaxHealth())
 			* 100;
 }
-uint8 HealbotAI::GetHealthPercent() const {
+uint8 HealbotAI::GetHealthPercent() const
+{
 	return GetHealthPercent(*m_bot);
 }
-uint8 HealbotAI::GetManaPercent(const Unit& target) const {
+uint8 HealbotAI::GetManaPercent(const Unit& target) const
+{
 	return (static_cast<float> (target.GetPower(POWER_MANA))
 			/ target.GetMaxPower(POWER_MANA)) * 100;
 }
-uint8 HealbotAI::GetManaPercent() const {
+uint8 HealbotAI::GetManaPercent() const
+{
 	return GetManaPercent(*m_bot);
 }
-uint8 HealbotAI::GetBaseManaPercent(const Unit& target) const {
-	if (target.GetPower(POWER_MANA) >= target.GetCreateMana()) {
+uint8 HealbotAI::GetBaseManaPercent(const Unit& target) const
+{
+	if (target.GetPower(POWER_MANA) >= target.GetCreateMana())
+    {
 		return (100);
-	} else {
+	}
+    else
+    {
 		return (static_cast<float> (target.GetPower(POWER_MANA))
 				/ target.GetMaxPower(POWER_MANA)) * 100;
 	}
 }
-uint8 HealbotAI::GetBaseManaPercent() const {
+uint8 HealbotAI::GetBaseManaPercent() const
+{
 	return GetBaseManaPercent(*m_bot);
 }
-uint8 HealbotAI::GetRageAmount(const Unit& target) const {
+uint8 HealbotAI::GetRageAmount(const Unit& target) const
+{
 	return (static_cast<float> (target.GetPower(POWER_RAGE)));
 }
-uint8 HealbotAI::GetRageAmount() const {
+uint8 HealbotAI::GetRageAmount() const
+{
 	return GetRageAmount(*m_bot);
 }
-uint8 HealbotAI::GetEnergyAmount(const Unit& target) const {
+uint8 HealbotAI::GetEnergyAmount(const Unit& target) const
+{
 	return (static_cast<float> (target.GetPower(POWER_ENERGY)));
 }
-uint8 HealbotAI::GetEnergyAmount() const {
+uint8 HealbotAI::GetEnergyAmount() const
+{
 	return GetEnergyAmount(*m_bot);
 }
 
 typedef std::pair<uint32, uint8> spellEffectPair;
 typedef std::multimap<spellEffectPair, Aura*> AuraMap;
 
-bool HealbotAI::HasAura(uint32 spellId, const Unit& player) const {
+bool HealbotAI::HasAura(uint32 spellId, const Unit& player) const
+{
 	for (AuraMap::const_iterator iter = player.GetAuras().begin(); iter
-			!= player.GetAuras().end(); ++iter) {
+			!= player.GetAuras().end(); ++iter)
+    {
 		if (iter->second->GetId() == spellId)
 			return true;
 	}
 	return false;
 }
-bool HealbotAI::HasAura(const char* spellName) const {
+bool HealbotAI::HasAura(const char* spellName) const
+{
 	return HasAura(spellName, *m_bot);
 }
-bool HealbotAI::HasAura(const char* spellName, const Unit& player) const {
+bool HealbotAI::HasAura(const char* spellName, const Unit& player) const
+{
 	uint32 spellId = getSpellId(spellName);
 	return (spellId) ? HasAura(spellId, player) : false;
 }
 
 // looks through all items / spells that bot could have to get a mount
-Item* HealbotAI::FindMount(uint32 matchingRidingSkill) const {
+Item* HealbotAI::FindMount(uint32 matchingRidingSkill) const
+{
 	// list out items in main backpack
 
 	Item* partialMatch = NULL;
 
-	for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; slot++) {
+	for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; slot++)
+    {
 		Item* const pItem = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
-		if (pItem) {
+		if (pItem)
+        {
 			const ItemPrototype* const pItemProto = pItem->GetProto();
 			if (!pItemProto || !m_bot->CanUseItem(pItemProto)
 					|| pItemProto->RequiredSkill != SKILL_RIDING)
 				continue;
 			if (pItemProto->RequiredSkillRank == matchingRidingSkill)
 				return pItem;
-			else if (!partialMatch || (partialMatch
-					&& partialMatch->GetProto()->RequiredSkillRank
-							< pItemProto->RequiredSkillRank))
+			else if (!partialMatch ||
+                (partialMatch && partialMatch->GetProto()->RequiredSkillRank < pItemProto->RequiredSkillRank))
 				partialMatch = pItem;
 		}
 	}
@@ -862,7 +844,8 @@ Item* HealbotAI::FindMount(uint32 matchingRidingSkill) const {
 	return partialMatch;
 }
 
-Item* HealbotAI::FindFood() const {
+Item* HealbotAI::FindFood() const
+{
 	// list out items in main backpack
 	for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; slot++) {
 		Item* const pItem = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
@@ -911,7 +894,8 @@ Item* HealbotAI::FindFood() const {
 	return NULL;
 }
 
-Item* HealbotAI::FindDrink() const {
+Item* HealbotAI::FindDrink() const
+{
 	// list out items in main backpack
 	for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; slot++) {
 		Item* const pItem = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
@@ -958,7 +942,8 @@ Item* HealbotAI::FindDrink() const {
 	return NULL;
 }
 
-Item* HealbotAI::FindBandage() const {
+Item* HealbotAI::FindBandage() const
+{
 	// list out items in main backpack
 	for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; slot++) {
 		Item* const pItem = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
@@ -994,7 +979,8 @@ Item* HealbotAI::FindBandage() const {
 	return NULL;
 }
 //Find Poison ...Natsukawa
-Item* HealbotAI::FindPoison() const {
+Item* HealbotAI::FindPoison() const
+{
 	// list out items in main backpack
 	for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; slot++) {
 		Item* const pItem = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
@@ -1030,7 +1016,7 @@ Item* HealbotAI::FindPoison() const {
 	return NULL;
 }
 
-/* // Doesn't work
+/* // Doesn't work yet
 Item* HealbotAI::FindManaPot() const
 {
     uint32 statType = 0;
@@ -1127,7 +1113,8 @@ Item* HealbotAI::FindManaPot() const
 	return NULL;
 }*/
 
-void HealbotAI::InterruptCurrentCastingSpell() {
+void HealbotAI::InterruptCurrentCastingSpell()
+{
 	TellMaster("I'm interrupting my current spell!");
 	WorldPacket* const packet = new WorldPacket(CMSG_CANCEL_CAST, 5);
 	*packet << m_CurrentlyCastingSpellId;
@@ -1135,7 +1122,8 @@ void HealbotAI::InterruptCurrentCastingSpell() {
 	m_bot->GetSession()->QueuePacket(packet);
 }
 
-void HealbotAI::Rest() {
+void HealbotAI::Rest()
+{
 	// stand up if we are done Resting
 	if (!(m_bot->GetHealth() < m_bot->GetMaxHealth() || (m_bot->getPowerType()
 			== POWER_MANA && m_bot->GetPower(POWER_MANA) < m_bot->GetMaxPower(
@@ -1185,7 +1173,8 @@ void HealbotAI::Rest() {
 
 // intelligently sets a reasonable combat order for this bot
 // based on its class / level / etc
-void HealbotAI::GetCombatOrders() {
+void HealbotAI::GetCombatOrders()
+{
 	Unit* thingToAttack = m_master->getAttackerForHelper();
 	if (!thingToAttack)
 		return;
@@ -1239,15 +1228,14 @@ void HealbotAI::GetCombatOrders() {
 	return;
 }
 
-void HealbotAI::DoNextCombatManeuver(){
-
-	Unit* const pTarget =
-			ObjectAccessor::GetUnit(*m_bot, m_bot->GetSelection());
+void HealbotAI::DoNextCombatManeuver()
+{
+	Unit* const pTarget = ObjectAccessor::GetUnit(*m_bot, m_bot->GetSelection());
 
 	// if current order doesn't make sense anymore
 	// clear our orders so we can get orders in next update
-	if (!pTarget || pTarget->isDead() || !pTarget->IsInWorld()
-			|| !m_bot->IsHostileTo(pTarget)) {
+	if (!pTarget || pTarget->isDead() || !pTarget->IsInWorld() || !m_bot->IsHostileTo(pTarget))
+    {
 		m_combatOrder = ORDERS_NONE;
 		m_bot->SetSelection(0);
 		m_bot->GetMotionMaster()->Clear(true);
@@ -1475,11 +1463,11 @@ void HealbotAI::DoNextCombatManeuver(){
 
 } // end DoNextCombatManeuver
 
-void HealbotAI::DoNonCombatActions(){
-
-	if (!m_bot) {
+void HealbotAI::DoNonCombatActions()
+{
+	if(!m_bot)
 		return;
-	}
+
 	SpellSequence = SPELL_HOLY;
 
 	// buff myself
@@ -1504,8 +1492,8 @@ void HealbotAI::DoNonCombatActions(){
 		m_bot->SetStandState(PLAYER_STATE_NONE);
 
 	Item* pItem = FindDrink();
-
-	if (pItem != NULL && GetManaPercent() < 30) {
+	if(pItem != NULL && GetManaPercent() < 30)
+    {
 		TellMaster("I could use a drink.");
 		UseItem(*pItem);
 		SetIgnoreUpdateTime(30);
@@ -1518,7 +1506,8 @@ void HealbotAI::DoNonCombatActions(){
 
 	pItem = FindFood();
 
-	if (pItem != NULL && GetHealthPercent() < 30) {
+	if(pItem != NULL && GetHealthPercent() < 30)
+    {
 		TellMaster("I could use some food.");
 		UseItem(*pItem);
 		SetIgnoreUpdateTime(30);
@@ -1526,28 +1515,33 @@ void HealbotAI::DoNonCombatActions(){
 	}
 
 	// buff and heal master's group
-	if (m_master->GetGroup()) {
-	Group::MemberSlotList const& groupSlot = m_master->GetGroup()->GetMemberSlots();
-	for (Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); itr++) {
-		Player *tPlayer = objmgr.GetPlayer(uint64 (itr->guid));
-		
-		// first rezz em
-		if (tPlayer->isDead()) {
-			std::string msg = "rezzing ";
-			msg += tPlayer->GetName();
-			GetHealbot()->Say(msg, LANG_UNIVERSAL);
-			CastSpell(REZZ, *tPlayer);
-			// rez is only 10 sec, but give time for lag
-			SetIgnoreUpdateTime(17);
-		} else {
-			// buff and heal
-			(!tPlayer->HasAura(FORTITUDE,0) && CastSpell (FORTITUDE, *tPlayer));
-			(HealTarget(*tPlayer, tPlayer->GetHealth()*100 / tPlayer->GetMaxHealth()));
-		}
-	}
-	}
+	if(m_master->GetGroup())
+    {
+        Group::MemberSlotList const& groupSlot = m_master->GetGroup()->GetMemberSlots();
+        for(Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); itr++)
+        {
+            Player *tPlayer = objmgr.GetPlayer(uint64 (itr->guid));
+            if(!tPlayer)
+                continue;
 
-
+		    // first resurrect
+		    if(tPlayer->isDead())
+            {
+			    std::string msg = "Resurrecting ";
+			    msg += tPlayer->GetName();
+			    GetHealbot()->Say(msg, LANG_UNIVERSAL);
+			    CastSpell(RESURRECT, *tPlayer, 15);
+			    // rez is only 10 sec, but give time for lag
+			    //SetIgnoreUpdateTime(15);
+		    }
+            else
+            {
+			    // buff and heal
+			    (!tPlayer->HasAura(FORTITUDE,0) && CastSpell (FORTITUDE, *tPlayer));
+			    (HealTarget(*tPlayer, tPlayer->GetHealth()*100 / tPlayer->GetMaxHealth()));
+		    }
+	    }
+	}
 } // end DoNonCombatActions
 
 // some possible things to use in AI
@@ -1559,11 +1553,14 @@ void HealbotAI::DoNonCombatActions(){
 // hasUnitState(FLAG) FLAG like: UNIT_STAT_ROOT, UNIT_STAT_CONFUSED, UNIT_STAT_STUNNED
 // hasAuraType
 
-void HealbotAI::UpdateAI(const uint32 p_time) {
-	if (m_bot->IsBeingTeleported() || m_bot->GetTrader()) return;
+void HealbotAI::UpdateAI(const uint32 p_time)
+{
+	if (m_bot->IsBeingTeleported() || m_bot->GetTrader())
+        return;
 
 	time_t currentTime = time(0);
-	if (currentTime < m_ignoreAIUpdatesUntilTime) return;
+	if (currentTime < m_ignoreAIUpdatesUntilTime)
+        return;
 
 	// default updates occur every two seconds
 	m_ignoreAIUpdatesUntilTime = time(0) + 1;
@@ -1576,7 +1573,8 @@ void HealbotAI::UpdateAI(const uint32 p_time) {
         return;
 
 	// direct cast command from master
-	else if (m_spellIdCommand != 0) {
+	else if (m_spellIdCommand != 0)
+    {
 		Unit* pTarget = ObjectAccessor::GetUnit(*m_bot, m_targetGuidCommand);
 		if (pTarget != NULL)
 			CastSpell(m_spellIdCommand, *pTarget);
@@ -1615,40 +1613,44 @@ void HealbotAI::UpdateAI(const uint32 p_time) {
 					== IDLE_MOTION_TYPE)
 		Follow(*m_master);
 
-	// do class specific non combat actions
-	else /*if (GetClassAI()) {*/
+	else
 		DoNonCombatActions();
 }
 
-Spell* HealbotAI::GetCurrentSpell() const {
+Spell* HealbotAI::GetCurrentSpell() const
+{
 	if (m_CurrentlyCastingSpellId == 0)
 		return NULL;
-	Spell* const pSpell = m_bot->FindCurrentSpellBySpellId(
-			m_CurrentlyCastingSpellId);
+
+	Spell* const pSpell = m_bot->FindCurrentSpellBySpellId(m_CurrentlyCastingSpellId);
 	return pSpell;
 }
 
-void HealbotAI::TellMaster(const std::string& text) {
+void HealbotAI::TellMaster(const std::string& text)
+{
 	SendWhisper(text, *m_master);
 }
 
-void HealbotAI::SendWhisper(const std::string& text, Player& player) {
+void HealbotAI::SendWhisper(const std::string& text, Player& player)
+{
 	WorldPacket data(SMSG_MESSAGECHAT, 200);
 	m_bot->BuildPlayerChat(&data, CHAT_MSG_REPLY, text, LANG_UNIVERSAL);
 	player.GetSession()->SendPacket(&data);
 }
 
-bool HealbotAI::canObeyCommandFrom(const Player& player) const {
-	return player.GetSession()->GetAccountId()
-			== m_master->GetSession()->GetAccountId();
+bool HealbotAI::canObeyCommandFrom(const Player& player) const
+{
+	return player.GetSession()->GetAccountId() == m_master->GetSession()->GetAccountId();
 }
 
-bool HealbotAI::CastSpell(const char* args, uint8 ignoreAIUpdatesTime) {
+bool HealbotAI::CastSpell(const char* args, uint8 ignoreAIUpdatesTime)
+{
 	uint32 spellId = getSpellId(args);
 	return (spellId) ? CastSpell(spellId, ignoreAIUpdatesTime) : false;
 }
 
-bool HealbotAI::CastSpell(uint32 spellId, Unit& target, uint8 ignoreAIUpdatesTime) {
+bool HealbotAI::CastSpell(uint32 spellId, Unit& target, uint8 ignoreAIUpdatesTime)
+{
 	uint64 oldSel = m_bot->GetSelection();
 	m_bot->SetSelection(target.GetGUID());
 	bool rv = CastSpell(spellId, ignoreAIUpdatesTime);
@@ -1656,11 +1658,11 @@ bool HealbotAI::CastSpell(uint32 spellId, Unit& target, uint8 ignoreAIUpdatesTim
 	return rv;
 }
 
-bool HealbotAI::CastSpell(uint32 spellId, uint8 ignoreAIUpdatesTime) {
-
-	// don't allow bot to cast damage spells on friends
+bool HealbotAI::CastSpell(uint32 spellId, uint8 ignoreAIUpdatesTime)
+{
 	const SpellEntry* const pSpellInfo = sSpellStore.LookupEntry(spellId);
-	if (!pSpellInfo) {
+	if (!pSpellInfo)
+    {
 		TellMaster("missing spell entry in CastSpell.");
 		return false;
 	}
@@ -1668,15 +1670,19 @@ bool HealbotAI::CastSpell(uint32 spellId, uint8 ignoreAIUpdatesTime) {
 	// set target
 	uint64 targetGUID = m_bot->GetSelection();
 	Unit* pTarget = ObjectAccessor::GetUnit(*m_bot, m_bot->GetSelection());
-	if (IsPositiveSpell(spellId)) {
+	if (IsPositiveSpell(spellId))
+    {
 		if (pTarget && !m_bot->IsFriendlyTo(pTarget))
 			pTarget = m_bot;
-	} else {
+	}
+    else
+    {
 		if (pTarget && m_bot->IsFriendlyTo(pTarget))
 			return false;
 
 		// search for Creature::reachWithSpellAttack to also see some examples of spell distance usage
-		if (!m_bot->isInFrontInMap(pTarget, 10)) {
+		if (!m_bot->isInFrontInMap(pTarget, 10))
+        {
 			m_bot->SetInFront(pTarget);
 			WorldPacket data;
 			m_bot->BuildHeartBeatMsg(&data);
@@ -1684,7 +1690,7 @@ bool HealbotAI::CastSpell(uint32 spellId, uint8 ignoreAIUpdatesTime) {
 		}
 	}
 
-	if (HasAura(spellId, *pTarget))
+	if(HasAura(spellId, *pTarget))
 		return false;
 
 	m_bot->CastSpell(pTarget, pSpellInfo, false);
@@ -1704,19 +1710,26 @@ bool HealbotAI::CastSpell(uint32 spellId, uint8 ignoreAIUpdatesTime) {
 // ChatHandler already implements some useful commands the master can call on bots
 // These commands are protected inside the ChatHandler class so this class provides access to the commands
 // we'd like to call on our bots
-class HealbotChatHandler: protected ChatHandler {
+class HealbotChatHandler: protected ChatHandler
+{
+
 public:
-	explicit HealbotChatHandler(Player* pMasterPlayer) :
-		ChatHandler(pMasterPlayer) {
+	explicit HealbotChatHandler(Player* pMasterPlayer) : ChatHandler(pMasterPlayer)
+    {
 	}
 
-	bool revive(const Player& botPlayer) {
+	bool revive(const Player& botPlayer)
+    {
 		return HandleReviveCommand(botPlayer.GetName());
 	}
-	bool teleport(const Player& botPlayer) {
+
+	bool teleport(const Player& botPlayer)
+    {
 		return HandleNamegoCommand(botPlayer.GetName());
 	}
-	void sysmessage(const char *str) {
+
+	void sysmessage(const char *str)
+    {
 		SendSysMessage(str);
 	}
 };
@@ -1726,9 +1739,11 @@ public:
 // because this one works on a const string, and it handles multiple links
 // |color|linkType:key:something1:...:somethingN|h[name]|h|r
 void HealbotAI::extractItemIds(const std::string& text,
-		std::list<uint32>& itemIds) const {
+		std::list<uint32>& itemIds) const
+{
 	uint8 pos = 0;
-	while (true) {
+	while (true)
+    {
 		int i = text.find("Hitem:", pos);
 		if (i == -1)
 			break;
@@ -1745,7 +1760,8 @@ void HealbotAI::extractItemIds(const std::string& text,
 }
 
 // extracts currency in #g#s#c format
-uint32 HealbotAI::extractMoney(const std::string& text) const {
+uint32 HealbotAI::extractMoney(const std::string& text) const
+{
 	// if user specified money in ##g##s##c format
 	std::string acum = "";
 	uint32 copper = 0;
@@ -1774,8 +1790,8 @@ uint32 HealbotAI::extractMoney(const std::string& text) const {
 // finds items in inventory and adds Item* to foundItemList
 // also removes found item IDs from itemIdSearchList when found
 void HealbotAI::findItemsInInv(std::list<uint32>& itemIdSearchList,
-		std::list<Item*>& foundItemList) const {
-
+		std::list<Item*>& foundItemList) const
+{
 	// look for items in main bag
 	for (uint8 slot = INVENTORY_SLOT_ITEM_START; itemIdSearchList.size() > 0
 			&& slot < INVENTORY_SLOT_ITEM_END; ++slot) {
@@ -1793,20 +1809,23 @@ void HealbotAI::findItemsInInv(std::list<uint32>& itemIdSearchList,
 	}
 
 	// for all for items in other bags
-	for (uint8 bag = INVENTORY_SLOT_BAG_START; itemIdSearchList.size() > 0
-			&& bag < INVENTORY_SLOT_BAG_END; ++bag) {
+	for (uint8 bag = INVENTORY_SLOT_BAG_START; itemIdSearchList.size() > 0 && bag < INVENTORY_SLOT_BAG_END; ++bag)
+    {
 		Bag* const pBag = (Bag*) m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, bag);
 		if (!pBag)
 			continue;
-		for (uint8 slot = 0; itemIdSearchList.size() > 0 && slot
-				< pBag->GetBagSize(); ++slot) {
+
+		for (uint8 slot = 0; itemIdSearchList.size() > 0 && slot < pBag->GetBagSize(); ++slot)
+        {
 			Item* const pItem = m_bot->GetItemByPos(bag, slot);
 			if (!pItem)
 				continue;
-			for (std::list<uint32>::iterator it = itemIdSearchList.begin(); it
-					!= itemIdSearchList.end(); ++it) {
+
+			for (std::list<uint32>::iterator it = itemIdSearchList.begin(); it != itemIdSearchList.end(); ++it)
+            {
 				if (pItem->GetProto()->ItemId != *it)
 					continue;
+
 				foundItemList.push_back(pItem);
 				itemIdSearchList.erase(it);
 				break;
@@ -1816,7 +1835,8 @@ void HealbotAI::findItemsInInv(std::list<uint32>& itemIdSearchList,
 }
 
 // submits packet to use an item
-void HealbotAI::UseItem(Item& item) {
+void HealbotAI::UseItem(Item& item)
+{
 	uint8 bagIndex = item.GetBagSlot();
 	uint8 slot = item.GetSlot();
 	uint8 cast_count = 1;
@@ -1847,7 +1867,8 @@ void HealbotAI::UseItem(Item& item) {
 }
 
 // submits packet to use an item
-void HealbotAI::EquipItem(Item& item) {
+void HealbotAI::EquipItem(Item& item)
+{
 	uint8 bagIndex = item.GetBagSlot();
 	uint8 slot = item.GetSlot();
 
@@ -1857,11 +1878,15 @@ void HealbotAI::EquipItem(Item& item) {
 }
 
 // submits packet to trade an item (trade window must already be open)
-bool HealbotAI::TradeItem(const Item& item) {
+bool HealbotAI::TradeItem(const Item& item)
+{
 	if (!m_bot->GetTrader() || item.IsInTrade() || !item.CanBeTraded())
 		return false;
-	for (uint8 i = 0; i < TRADE_SLOT_TRADED_COUNT; ++i) {
-		if (m_bot->GetItemPosByTradeSlot(i) == NULL_SLOT) {
+
+	for (uint8 i = 0; i < TRADE_SLOT_TRADED_COUNT; ++i)
+    {
+		if (m_bot->GetItemPosByTradeSlot(i) == NULL_SLOT)
+        {
 			WorldPacket* const packet = new WorldPacket(CMSG_SET_TRADE_ITEM, 3);
 			*packet << (uint8) i << (uint8) item.GetBagSlot()
 					<< (uint8) item.GetSlot();
@@ -1873,8 +1898,10 @@ bool HealbotAI::TradeItem(const Item& item) {
 }
 
 // submits packet to trade copper (trade window must be open)
-bool HealbotAI::TradeCopper(uint32 copper) {
-	if (copper > 0) {
+bool HealbotAI::TradeCopper(uint32 copper)
+{
+	if (copper > 0)
+    {
 		WorldPacket* const packet = new WorldPacket(CMSG_SET_TRADE_GOLD, 4);
 		*packet << copper;
 		m_bot->GetSession()->QueuePacket(packet);
@@ -1883,13 +1910,15 @@ bool HealbotAI::TradeCopper(uint32 copper) {
 	return false;
 }
 
-void HealbotAI::Stay() {
+void HealbotAI::Stay()
+{
 	m_IsFollowingMaster = false;
 	m_bot->GetMotionMaster()->Clear(true);
 	m_bot->HandleEmoteCommand(EMOTE_ONESHOT_SALUTE);
 }
 
-bool HealbotAI::Follow(Player& player) {
+bool HealbotAI::Follow(Player& player)
+{
 	if (m_master->IsBeingTeleported())
 		return false;
 	m_IsFollowingMaster = true;
@@ -1897,7 +1926,8 @@ bool HealbotAI::Follow(Player& player) {
 	if (!m_bot->IsStandState())
 		m_bot->SetStandState(PLAYER_STATE_NONE);
 
-	if (!m_bot->isInCombat()) {
+	if (!m_bot->isInCombat())
+    {
 		// if bot is dead and master is alive, revive bot
 		if (m_master->isAlive() && !m_bot->isAlive()) {
 			m_ignoreAIUpdatesUntilTime = time(0) + 6;
@@ -1914,18 +1944,21 @@ bool HealbotAI::Follow(Player& player) {
 				player.GetPositionX())) > 50) || (abs(
 				abs(m_bot->GetPositionY()) - abs(player.GetPositionY())) > 50)
 				|| (abs(abs(m_bot->GetPositionZ()) - abs(player.GetPositionZ()))
-						> 50)) {
+						> 50))
+        {
 			m_ignoreAIUpdatesUntilTime = time(0) + 6;
 			HealbotChatHandler ch(m_master);
 
-			if (!ch.teleport(*m_bot)) {
+			if (!ch.teleport(*m_bot))
+            {
 				ch.sysmessage(".. could not be teleported ..");
 				return false;
 			}
 		}
 	}
 
-	if (m_bot->isAlive()) {
+	if (m_bot->isAlive())
+    {
 		float angle = rand_float(0, M_PI);
 		float dist = rand_float(1, 9);
 		m_bot->GetMotionMaster()->Clear(true);
@@ -1936,7 +1969,8 @@ bool HealbotAI::Follow(Player& player) {
 }
 
 // handle commands sent through chat channels
-void HealbotAI::HandleCommand(const std::string& text, Player& fromPlayer) {
+void HealbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
+{
 	// ignore any messages from Addons
 	if (text.find("X-Perl") != std::wstring::npos)
 		return;
@@ -1957,7 +1991,8 @@ void HealbotAI::HandleCommand(const std::string& text, Player& fromPlayer) {
 
 	// if in the middle of a trade, and player asks for an item/money
 	else if (m_bot->GetTrader() && m_bot->GetTrader()->GetGUID()
-			== fromPlayer.GetGUID()) {
+			== fromPlayer.GetGUID())
+    {
 		uint32 copper = extractMoney(text);
 		if (copper > 0)
 			TradeCopper(copper);
@@ -1965,14 +2000,12 @@ void HealbotAI::HandleCommand(const std::string& text, Player& fromPlayer) {
 		std::list<uint32> itemIds;
 		extractItemIds(text, itemIds);
 		if (itemIds.size() == 0)
-			SendWhisper(
-					"Show me what item you want by shift clicking the item in the chat window.",
-					fromPlayer);
-		else {
+			SendWhisper("Show me what item you want by shift clicking the item in the chat window.", fromPlayer);
+		else
+        {
 			std::list<Item*> itemList;
 			findItemsInInv(itemIds, itemList);
-			for (std::list<Item*>::iterator it = itemList.begin(); it
-					!= itemList.end(); ++it)
+			for (std::list<Item*>::iterator it = itemList.begin(); it != itemList.end(); ++it)
 				TradeItem(**it);
 		}
 	}
@@ -2000,12 +2033,15 @@ void HealbotAI::HandleCommand(const std::string& text, Player& fromPlayer) {
     else if(text == "rest" || text == "drink" || text == "eat")
         Rest();
 
-	else if (text == "attack") {
+	else if (text == "attack")
+    {
 		uint64 attackOnGuid = fromPlayer.GetSelection();
-		if (attackOnGuid) {
+		if (attackOnGuid)
+        {
 			Unit* thingToAttack = ObjectAccessor::GetUnit(*m_bot, attackOnGuid);
 			if (!m_bot->IsFriendlyTo(thingToAttack) && m_bot->IsWithinLOSInMap(
-					thingToAttack)) {
+					thingToAttack))
+            {
 				m_bot->GetMotionMaster()->Clear(true);
 				m_combatOrder = ORDERS_KILL;
 				m_bot->SetSelection(thingToAttack->GetGUID());
@@ -2013,7 +2049,9 @@ void HealbotAI::HandleCommand(const std::string& text, Player& fromPlayer) {
 				m_bot->GetMotionMaster()->MoveChase(thingToAttack);
 				m_ignoreAIUpdatesUntilTime = time(0) + 6;
 			}
-		} else {
+		}
+        else
+        {
 			TellMaster("No target is selected.");
 			m_bot->HandleEmoteCommand(EMOTE_ONESHOT_TALK);
 		}
@@ -2021,7 +2059,8 @@ void HealbotAI::HandleCommand(const std::string& text, Player& fromPlayer) {
 
 	// handle cast command
 	else if (text.size() > 2 && text.substr(0, 2) == "c " || text.size() > 5
-			&& text.substr(0, 5) == "cast ") {
+			&& text.substr(0, 5) == "cast ")
+    {
 		std::string spellStr = text.substr(text.find(" ") + 1);
 		uint32 spellId = (uint32) atol(spellStr.c_str());
 
@@ -2030,7 +2069,8 @@ void HealbotAI::HandleCommand(const std::string& text, Player& fromPlayer) {
 			spellId = getSpellId(spellStr.c_str());
 
 		uint64 castOnGuid = fromPlayer.GetSelection();
-		if (spellId != 0 && castOnGuid != 0) {
+		if (spellId != 0 && castOnGuid != 0)
+        {
 			m_spellIdCommand = spellId;
 			m_targetGuidCommand = castOnGuid;
 		}
@@ -2038,7 +2078,8 @@ void HealbotAI::HandleCommand(const std::string& text, Player& fromPlayer) {
 
 	// use items
 	else if (text.size() > 2 && text.substr(0, 2) == "u " || text.size() > 4
-			&& text.substr(0, 4) == "use ") {
+			&& text.substr(0, 4) == "use ")
+    {
 		std::list<uint32> itemIds;
 		std::list<Item*> itemList;
 		extractItemIds(text, itemIds);
@@ -2050,38 +2091,35 @@ void HealbotAI::HandleCommand(const std::string& text, Player& fromPlayer) {
 
 	// equip items
 	else if (text.size() > 2 && text.substr(0, 2) == "e " || text.size() > 6
-			&& text.substr(0, 6) == "equip ") {
+			&& text.substr(0, 6) == "equip ")
+    {
 		std::list<uint32> itemIds;
 		std::list<Item*> itemList;
 		extractItemIds(text, itemIds);
 		findItemsInInv(itemIds, itemList);
-		for (std::list<Item*>::iterator it = itemList.begin(); it
-				!= itemList.end(); ++it)
+		for (std::list<Item*>::iterator it = itemList.begin(); it != itemList.end(); ++it)
 			EquipItem(**it);
 	}
 
-	else if (text == "spells") {
-
+	else if (text == "spells")
+    {
 		int loc = m_master->GetSession()->GetSessionDbcLocale();
 
 		std::ostringstream posOut;
 		std::ostringstream negOut;
 
-		const std::string
-				ignoreList =
-						",Opening,Closing,Stuck,Remove Insignia,Opening - No Text,Grovel,Duel,Honorless Target,";
+		const std::string ignoreList = ",Opening,Closing,Stuck,Remove Insignia,Opening - No Text,Grovel,Duel,Honorless Target,";
 		std::string alreadySeenList = ",";
 
 		for (PlayerSpellMap::iterator itr = m_bot->GetSpellMap().begin(); itr
-				!= m_bot->GetSpellMap().end(); ++itr) {
+				!= m_bot->GetSpellMap().end(); ++itr)
+        {
 			const uint32 spellId = itr->first;
 
-			if (itr->second->state == PLAYERSPELL_REMOVED
-					|| itr->second->disabled || IsPassiveSpell(spellId))
+			if (itr->second->state == PLAYERSPELL_REMOVED || itr->second->disabled || IsPassiveSpell(spellId))
 				continue;
 
-			const SpellEntry* const pSpellInfo = sSpellStore.LookupEntry(
-					spellId);
+			const SpellEntry* const pSpellInfo = sSpellStore.LookupEntry(spellId);
 			if (!pSpellInfo)
 				continue;
 
@@ -2091,8 +2129,7 @@ void HealbotAI::HandleCommand(const std::string& text, Player& fromPlayer) {
 			comp.append(pSpellInfo->SpellName[loc]);
 			comp.append(",");
 
-			if (!(ignoreList.find(comp) == std::string::npos
-					&& alreadySeenList.find(comp) == std::string::npos))
+			if (!(ignoreList.find(comp) == std::string::npos && alreadySeenList.find(comp) == std::string::npos))
 				continue;
 
 			alreadySeenList += pSpellInfo->SpellName[loc];
@@ -2112,8 +2149,8 @@ void HealbotAI::HandleCommand(const std::string& text, Player& fromPlayer) {
 		SendWhisper("and here's my attack spells:", fromPlayer);
 		ch.SendSysMessage(negOut.str().c_str());
 	}
-
-	else {
+	else
+    {
 		std::string msg = "Invalid command. Commands that can be used: follow, stay, (c)ast <spellname>, spells, (e)quip, (u)se.";
 		SendWhisper(msg, fromPlayer);
 		m_bot->HandleEmoteCommand(EMOTE_ONESHOT_TALK);
@@ -2121,8 +2158,8 @@ void HealbotAI::HandleCommand(const std::string& text, Player& fromPlayer) {
 }
 
 
-void HealbotAI::HealTarget(Unit &target, uint8 hp){
-	
+void HealbotAI::HealTarget(Unit &target, uint8 hp)
+{
 	if (hp < 25 && CanUseSpell(FLASH_HEAL) /*&& GetManaPercent() >= 20*/)
     {
 		if(CastSpell(FLASH_HEAL, target, 1.5))
@@ -2161,6 +2198,7 @@ void HealbotAI::HealTarget(Unit &target, uint8 hp){
 }
 
 
-void HealbotAI::BuffPlayer(Player* target) {
+void HealbotAI::BuffPlayer(Player* target)
+{
 	CastSpell(FORTITUDE, *target, 1);
 }

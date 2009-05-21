@@ -5301,8 +5301,6 @@ void Spell::EffectDuel(uint32 i)
     map->Add(pGameObj);
     //END
 
-    // Healbot moved Send request below (actually moved it back)
-
     // Send request
     WorldPacket data(SMSG_DUEL_REQUESTED, 16);
     data << pGameObj->GetGUID();

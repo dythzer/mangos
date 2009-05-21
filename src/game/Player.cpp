@@ -59,7 +59,6 @@
 #include "SocialMgr.h"
 #include "AchievementMgr.h"
 
-// Healbot mod:
 #include "HealbotAI.h"
 
 #include <cmath>
@@ -275,7 +274,6 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
 {
     m_transport = 0;
 
-	// Healbot mod:
     m_HealbotAI = NULL;
 
     m_speakTime = 0;
@@ -517,7 +515,8 @@ Player::~Player ()
     delete m_runes;
 
     // Healbot mod: remove AI if exists
-    if (m_HealbotAI != NULL) {
+    if (m_HealbotAI != NULL)
+    {
         delete m_HealbotAI;
         m_HealbotAI = NULL;
     }
@@ -1121,9 +1120,8 @@ void Player::Update( uint32 p_time )
     UpdateAfkReport(now);
 
     // Healbot
-    if (m_HealbotAI != NULL) {
+    if (m_HealbotAI != NULL)
         m_HealbotAI->UpdateAI(p_time);
-    }
 
     // Update items that have just a limited lifetime
     if (now>m_Last_tick)
@@ -1579,8 +1577,8 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
     // preparing unsummon pet if lost (we must get pet before teleportation or will not find it later)
     Pet* pet = GetPet();
 
-    // stop following master at teleport
-    for (HealbotMap::const_iterator itr = GetSession()->GetHealbotsBegin(); itr != GetSession()->GetHealbotsEnd(); ++itr)
+    // healbot - stop following master at teleport
+    for(HealbotMap::const_iterator itr = GetSession()->GetHealbotsBegin(); itr != GetSession()->GetHealbotsEnd(); ++itr)
     {
         Player* botPlayer = itr->second;
         botPlayer->GetMotionMaster()->Clear();
@@ -20070,22 +20068,26 @@ bool Player::canSeeSpellClickOn(Creature const *c) const
 }
 
 // Healbot mod:
-void Player::SetHealbotAI(HealbotAI * ai) {
-
-    if (ai == NULL) {
+void Player::SetHealbotAI(HealbotAI * ai)
+{
+    if(ai == NULL)
+    {
         sLog.outError("Tried to assign Healbot AI to NULL; this is not supported!");
         return;
     }
 
-    if (GetHealbotAI() != NULL) {
+    if(GetHealbotAI() != NULL)
+    {
         sLog.outError("Tried to reassign Healbot AI; this is not yet supported!");
         return;
     }
 
     // assigning bot AI to normal players is not currently supported
-    if (! IsHealbot()) {
+    if(!IsHealbot())
+    {
         sLog.outError("Tried to set Healbot AI for a player that was not a bot.");
         return;
     }
+
     m_HealbotAI = ai;
 }
