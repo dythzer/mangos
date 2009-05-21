@@ -775,8 +775,7 @@ typedef std::multimap<spellEffectPair, Aura*> AuraMap;
 
 bool HealbotAI::HasAura(uint32 spellId, const Unit& player) const
 {
-	for (AuraMap::const_iterator iter = player.GetAuras().begin(); iter
-			!= player.GetAuras().end(); ++iter)
+	for (AuraMap::const_iterator iter = player.GetAuras().begin(); iter != player.GetAuras().end(); ++iter)
     {
 		if (iter->second->GetId() == spellId)
 			return true;
@@ -1187,13 +1186,13 @@ void HealbotAI::GetCombatOrders()
 	}
 
 	m_bot->SetSelection(thingToAttack->GetGUID());
-	m_ignoreAIUpdatesUntilTime = time(0) + 1;
+	//m_ignoreAIUpdatesUntilTime = time(0) + 1;
 	m_combatOrder = ORDERS_KILL;
 
 	if (m_bot->getStandState() != PLAYER_STATE_NONE)
 		m_bot->SetStandState(PLAYER_STATE_NONE);
 
-	m_bot->Attack(thingToAttack, true);
+	//m_bot->Attack(thingToAttack, true);
 
 	m_bot->GetMotionMaster()->Clear(true);
 
@@ -1286,7 +1285,7 @@ void HealbotAI::DoNextCombatManeuver()
 
         if(UseDamageSpells == 2) // Wand only
         {
-            if(m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_RANGED) && CanUseSpell(WAND))
+            if(m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_RANGED))
                 CastSpell(WAND);
         }
         else if(UseDamageSpells == 1)
@@ -1302,15 +1301,6 @@ void HealbotAI::DoNextCombatManeuver()
 				        break;
         				
 			        }
-			          /*else	if (CLEARCASTING > 0 && LastSpellHoly <2 && GetManaPercent() >= 60) {
-						        TellMaster("I'm casting clearcasting");
-						        CastSpell(CLEARCASTING, *pTarget);
-        						
-						        SpellSequence = SPELL_SHADOWMAGIC;
-						        (LastSpellHoly = LastSpellHoly +1);
-						        break;
-				          }*/
-        			
 				        else if (HOLY_NOVA > 0 && LastSpellHoly <3 && GetManaPercent() >= 60) {
 						        TellMaster("I'm casting holy nova");
 						        CastSpell(HOLY_NOVA);
@@ -1466,37 +1456,42 @@ void HealbotAI::DoNonCombatActions()
 	if(!m_bot)
 		return;
 
-	SpellSequence = SPELL_HOLY;
+	//SpellSequence = SPELL_HOLY;
+
+    // buff master
+	if(!m_master->HasAura(FORTITUDE, 0))
+        CastSpell(FORTITUDE, *(m_master));
+
+    if(!m_master->HasAura(SHADOW_PROTECTION, 0))
+        CastSpell(SHADOW_PROTECTION, *(m_master));
 
 	// buff myself
-	if (FORTITUDE > 0) {
-		(!m_bot->HasAura(FORTITUDE, 0) && CastSpell (FORTITUDE, *m_bot));
-	}
-	if (INNER_FIRE > 0) {
-		(!m_bot->HasAura(INNER_FIRE, 0) && CastSpell (INNER_FIRE, *m_bot));
-	}
+	if(!m_bot->HasAura(FORTITUDE, 0))
+        CastSpell(FORTITUDE, *m_bot);
 
-	// buff master
+	if(!m_bot->HasAura(INNER_FIRE, 0))
+        CastSpell(INNER_FIRE, *m_bot);
 
-	if (FORTITUDE > 0) {
-		(!m_master->HasAura(FORTITUDE,0) && CastSpell (FORTITUDE, *(m_master)) );
-	}
+    if(!m_bot->HasAura(SHADOW_PROTECTION, 0))
+        CastSpell(SHADOW_PROTECTION, *m_bot);
+
+    // TODO: Buff group members
 
 	// mana check
 	if (m_bot->getStandState() != PLAYER_STATE_NONE)
 		m_bot->SetStandState(PLAYER_STATE_NONE);
 
 	Item* pItem = FindDrink();
-	if(pItem != NULL && GetManaPercent() < 30)
+	if(pItem != NULL && GetManaPercent() < 40)
     {
-		TellMaster("I could use a drink.");
+		TellMaster("I need a mana break.");
 		UseItem(*pItem);
-		SetIgnoreUpdateTime(30);
+		//SetIgnoreUpdateTime(30); TODO: Add check in UpdateAI(), return if is resting
 		return;
 	}
 
 	// hp check
-	if (m_bot->getStandState() != PLAYER_STATE_NONE)
+	/*if (m_bot->getStandState() != PLAYER_STATE_NONE)
 		m_bot->SetStandState(PLAYER_STATE_NONE);
 
 	pItem = FindFood();
@@ -1507,7 +1502,7 @@ void HealbotAI::DoNonCombatActions()
 		UseItem(*pItem);
 		SetIgnoreUpdateTime(30);
 		return;
-	}
+	}*/
 
 	// buff and heal master's group
 	if(m_master->GetGroup())
@@ -1577,39 +1572,38 @@ void HealbotAI::UpdateAI(const uint32 p_time)
 		m_targetGuidCommand = 0;
 	}
 
-    else if(!m_bot->getAttackers().empty())
+    /////////// HANDLE COMBAT ///////////
+
+    if(m_bot->isInCombat() || m_master->isInCombat())
     {
-        if(GetHealthPercent() <= 60 && CanUseSpell(FADE) && !m_bot->HasAura(FADE, 0) && !m_bot->HasSpellCooldown(FADE)) // use fade below 60% hp
+        if(!m_bot->getAttackers().empty()) // Use fade if under attack and below 60% hp, and aggro warning in chat if enabled
         {
-            if(CastSpell(FADE, 1))
-                TellMaster("I'm using Fade");
+            if(GetHealthPercent() <= 60 && CanUseSpell(FADE) && !m_bot->HasSpellCooldown(FADE))
+            {
+                if(CastSpell(FADE, 1))
+                    TellMaster("I'm using Fade");
+            }
+            else
+                TellMaster("Help! I'm under attack.");
         }
-        else
-            TellMaster("Help! I'm under attack.");
+
+        if (m_combatOrder != ORDERS_NONE)
+            DoNextCombatManeuver();
+
+        // if master is in combat and bot is not, automatically assist master
+        // NOTE: combat orders are also set via incoming packets to bot or outgoing packets from master
+        else if(m_master->isInCombat())
+            GetCombatOrders();
     }
+    else
+    /////////// HANDLE NON-COMBAT ///////////
+    {
+        // if commanded to follow master and not already following master then follow master
+        if (!m_bot->isInCombat() && m_IsFollowingMaster && m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType() == IDLE_MOTION_TYPE)
+            Follow(*m_master);
 
-	// handle combat
-	else if (m_combatOrder != ORDERS_NONE)
-		DoNextCombatManeuver();
-
-	// if master is in combat and bot is not, automatically assist master
-	// NOTE: combat orders are also set via incoming packets to bot or outgoing packets from master
-	//	else if (m_master->isInCombat() && ! m_bot->isInCombat())
-	else if (m_master->isInCombat())
-		GetCombatOrders();
-	/*
-	 // are we sitting, if so Rest if possible
-	 else if (m_bot->getStandState() == PLAYER_STATE_SIT)
-	 Rest();
-	 */
-	// if commanded to follow master and not already following master then follow master
-	else if (!m_bot->isInCombat() && m_IsFollowingMaster
-			&& m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType()
-					== IDLE_MOTION_TYPE)
-		Follow(*m_master);
-
-	else
-		DoNonCombatActions();
+        DoNonCombatActions();
+    }
 }
 
 Spell* HealbotAI::GetCurrentSpell() const
@@ -1655,6 +1649,9 @@ bool HealbotAI::CastSpell(uint32 spellId, Unit& target, uint8 ignoreAIUpdatesTim
 
 bool HealbotAI::CastSpell(uint32 spellId, uint8 ignoreAIUpdatesTime)
 {
+    if(spellId == 0)
+        return false;
+
 	const SpellEntry* const pSpellInfo = sSpellStore.LookupEntry(spellId);
 	if (!pSpellInfo)
     {
@@ -1685,8 +1682,13 @@ bool HealbotAI::CastSpell(uint32 spellId, uint8 ignoreAIUpdatesTime)
 		}
 	}
 
-	if(HasAura(spellId, *pTarget))
-		return false;
+	//if(m_bot->HasAura(spellId))
+	//	return false;
+    //if(HasAura(spellId, *pTarget))
+    //    return false;
+
+    if(pTarget->HasAura(spellId))
+        return false;
 
 	m_bot->CastSpell(pTarget, pSpellInfo, false);
 
@@ -1695,9 +1697,13 @@ bool HealbotAI::CastSpell(uint32 spellId, uint8 ignoreAIUpdatesTime)
 		return false;
 
 	m_CurrentlyCastingSpellId = spellId;
-	// m_ignoreAIUpdatesUntilTime = time(0) + pSpell->GetCastTime() + 3;
-	//m_ignoreAIUpdatesUntilTime = time(0) + 6;
-    m_ignoreAIUpdatesUntilTime = time(0) + ignoreAIUpdatesTime;
+
+    if(pSpell->GetCastTime() == 0)
+        m_ignoreAIUpdatesUntilTime = time(0) + 1; // instant cast, global cooldown
+    else
+        m_ignoreAIUpdatesUntilTime = time(0) + (pSpell->GetCastTime()/1000);
+
+    //m_ignoreAIUpdatesUntilTime = time(0) + ignoreAIUpdatesTime;
 
 	return true;
 }
@@ -2155,12 +2161,12 @@ void HealbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
 
 void HealbotAI::HealTarget(Unit &target, uint8 hp)
 {
-	if (hp < 25 && CanUseSpell(FLASH_HEAL) /*&& GetManaPercent() >= 20*/)
+	if (hp < 35 && CanUseSpell(FLASH_HEAL) /*&& GetManaPercent() >= 20*/)
     {
 		if(CastSpell(FLASH_HEAL, target, 1.5))
             TellMaster("I'm casting flash heal.");
 	}
-	else if (hp < 33 && CanUseSpell(BINDING_HEAL) && GetManaPercent() >= 27)
+	/*else if (hp < 33 && CanUseSpell(BINDING_HEAL) && GetManaPercent() >= 27)
     {
 		if(CastSpell(BINDING_HEAL, target, 1.5))
             TellMaster("I'm casting binding heal.");
@@ -2170,22 +2176,22 @@ void HealbotAI::HealTarget(Unit &target, uint8 hp)
 		if(CastSpell(PRAYER_OF_HEALING, target, 3))
             TellMaster("I'm casting prayer of healing.");
 	}
-	else if (hp < 50 && CanUseSpell(CIRCLE_OF_HEALING) && GetManaPercent() >= 24)
+	else if (hp < 50 && GetManaPercent() >= 24)
     {
 		if(CastSpell(CIRCLE_OF_HEALING, target, 1))
             TellMaster("I'm casting circle of healing.");
-	}
-    else if (hp < 60 && CanUseSpell(HEAL) && GetManaPercent() >= 36)
+	}*/
+    else if (hp < 60 && GetManaPercent() >= 36)
     {
 		if(CastSpell(HEAL, target, 3))
-            TellMaster("I'm casting Greater Heal.");
+            TellMaster("I'm casting Heal (greater or lesser)");
 	}
-	else if (hp < 83 && CanUseSpell(FLASH_HEAL) /*&& GetManaPercent() >= 20*/)
+	else if (hp < 85 /*&& GetManaPercent() >= 20*/)
     {
 		if(CastSpell(FLASH_HEAL, target, 1.5))
             TellMaster("I'm casting Flash Heal.");
 	}
-	else if (hp < 90 && CanUseSpell(RENEW) && GetManaPercent() >= 15)
+	else if (hp <= 90 && GetManaPercent() >= 15)
     {
 		if(CastSpell(RENEW, target, 1))
             TellMaster("I'm casting renew.");
