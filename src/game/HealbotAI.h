@@ -71,6 +71,9 @@ class MANGOS_DLL_SPEC HealbotAI {
 
 	// ******* Utilities ***************************************************
 
+
+        uint32 getLearnedSpellId(uint32 spellId_highest_rank) const;
+
 	// finds spell ID for matching substring args
         // in priority of full text match, spells not taking reagents, and highest rank
 	uint32 getSpellId(const char* args) const;
@@ -156,13 +159,13 @@ class MANGOS_DLL_SPEC HealbotAI {
 	void HealTarget (Unit& target, uint8 hp);
 
 	// holy
-	uint32 RENEW, HEAL, FLASH_HEAL, RESURRECT, SMITE, CLEARCASTING, HOLY_NOVA, HOLY_FIRE, DESPERATE_PRAYER, PRAYER_OF_HEALING, CIRCLE_OF_HEALING, BINDING_HEAL, PRAYER_OF_MENDING;
+	uint32 RENEW, HEAL, FLASH_HEAL, RESURRECT, SMITE, HOLY_NOVA, HOLY_FIRE, DESPERATE_PRAYER, PRAYER_OF_HEALING, CIRCLE_OF_HEALING, BINDING_HEAL, PRAYER_OF_MENDING;
 
 	// shadowmagic
-	uint32 FADE, PAIN, MIND_BLAST, SCREAM, MIND_FLAY, DEVOURING_PLAGUE, SHADOW_PROTECTION, VAMPIRIC_TOUCH, PRAYER_OF_SHADOW_PROTECTION, SHADOWFIEND, MIND_SEAR;
+	uint32 FADE, PAIN, MIND_BLAST, SCREAM, MIND_FLAY, DEVOURING_PLAGUE, SHADOW_PROTECTION, VAMPIRIC_TOUCH, SHADOWFIEND, MIND_SEAR;
 
 	// discipline
-	uint32 PWS, INNER_FIRE, FORTITUDE, TOUCH_OF_WEAKNESS, FEAR_WARD, DSPIRIT, POWER_INFUSION, MASS_DISPEL;
+	uint32 PWS, INNER_FIRE, FORTITUDE, FEAR_WARD, DSPIRIT, POWER_INFUSION, MASS_DISPEL;
 
     uint32 WAND;
 

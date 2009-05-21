@@ -55,59 +55,57 @@ m_combatOrder(ORDERS_NONE), m_ScenarioType(SCENARIO_PVEEASY), m_TimeDoneEating(0
 m_IsFollowingMaster(true), m_spellIdCommand(0), m_targetGuidCommand(0)
 {
 
-    // TODO: DefineSpells() instead of get spell id from string
+    if(getLearnedSpellId(48063) > 0)
+        HEAL = getLearnedSpellId(48063); // Greater Heal
+    else
+        HEAL = getLearnedSpellId(2053);  // Lesser Heal
 
-    //DISCIPLINE
-    if((FORTITUDE = getSpellId("prayer of fortitude"))==1)
-		FORTITUDE = getSpellId("prayer of fortitude");
-	if((FORTITUDE = getSpellId ("power word: fortitude"))==1 && (FORTITUDE = getSpellId ("prayer of fortitude"))==0)
-		FORTITUDE = getSpellId("power word: fortitude");
-	TOUCH_OF_WEAKNESS = getSpellId("touch of weakness");
-	FEAR_WARD = getSpellId("fear ward");
-	if((DSPIRIT = getSpellId ("prayer of spirit"))==1)
-		DSPIRIT = getSpellId("prayer of spirit");
-	if((DSPIRIT = getSpellId ("divine spirit"))==1 && (DSPIRIT = getSpellId ("prayer of spirit"))==0)
-		DSPIRIT = getSpellId("divine spirit");
-	INNER_FIRE                        = getSpellId("inner fire");
-	PWS                               = getSpellId("power word: shield");
-    MASS_DISPEL                       = getSpellId("mass dispel");
-			
-    //HOLY
-    if((HEAL = getSpellId ("greater heal"))>0)
-        HEAL = getSpellId("greater heal");
-	else if((HEAL = getSpellId ("heal"))>0 && (HEAL = getSpellId ("greater heal")) == 0)
-		HEAL = getSpellId("heal");
-	else if((HEAL = getSpellId ("greater heal"))==0 && (HEAL = getSpellId ("heal")) == 0)
-		HEAL = getSpellId("lesser heal");
+    FORTITUDE                         = getLearnedSpellId(48161);
+    RENEW                             = getLearnedSpellId(48068);
+    FLASH_HEAL                        = getLearnedSpellId(48071);
+    DSPIRIT                           = getLearnedSpellId(48073);
+    INNER_FIRE                        = getLearnedSpellId(48168);
+    PWS                               = getLearnedSpellId(48066);
+    RESURRECT                         = getLearnedSpellId(48171);
+    SMITE                             = getLearnedSpellId(48123);
+    HOLY_NOVA                         = getLearnedSpellId(48078);
+    DESPERATE_PRAYER                  = getLearnedSpellId(48173);
+    PRAYER_OF_HEALING                 = getLearnedSpellId(48072);
+    CIRCLE_OF_HEALING                 = getLearnedSpellId(48089);
+    BINDING_HEAL                      = getLearnedSpellId(48120);
+    PRAYER_OF_MENDING                 = getLearnedSpellId(48113);
+    PAIN                              = getLearnedSpellId(48125);
+    MIND_BLAST                        = getLearnedSpellId(48127);
+    SCREAM                            = getLearnedSpellId(10890);
+    MIND_FLAY                         = getLearnedSpellId(48156);
+    DEVOURING_PLAGUE                  = getLearnedSpellId(48300);
+    SHADOW_PROTECTION                 = getLearnedSpellId(48169);
+    VAMPIRIC_TOUCH                    = getLearnedSpellId(48160);
+    MIND_SEAR                         = getLearnedSpellId(53023);
 
-	RENEW                             = getSpellId("renew");
-	FLASH_HEAL                        = getSpellId("flash heal");
-	RESURRECT                         = getSpellId("resurrection");
-	SMITE                             = getSpellId("smite");
-	CLEARCASTING                      = getSpellId("clearcasting");
-	HOLY_NOVA                         = getSpellId("holy nova");
-	DESPERATE_PRAYER                  = getSpellId("desperate prayer");
-	PRAYER_OF_HEALING                 = getSpellId("prayer of healing");
-	CIRCLE_OF_HEALING                 = getSpellId("circle of healing");
-	BINDING_HEAL                      = getSpellId("binding heal");
-	PRAYER_OF_MENDING                 = getSpellId("prayer of mending");
-	//SHADOWMAGIC
-	FADE                              = getSpellId("fade");
-	PAIN                              = getSpellId("shadow word: pain");
-	MIND_BLAST                        = getSpellId("mind blast");
-	SCREAM                            = getSpellId("psychic scream");
-	MIND_FLAY                         = getSpellId("mind flay");
-	DEVOURING_PLAGUE                  = getSpellId("devouring plague");
-	SHADOW_PROTECTION                 = getSpellId("shadow protection");
-	VAMPIRIC_TOUCH                    = getSpellId("vampiric touch");
-	PRAYER_OF_SHADOW_PROTECTION       = getSpellId("prayer of shadow protection");
-	SHADOWFIEND                       = getSpellId("shadowfiend");
-	MIND_SEAR                         = getSpellId("mind sear");
-
+    // Spells with no ranks
+    MASS_DISPEL                       = 32375;
+    FEAR_WARD                         = 6346;
     WAND                              = 5019;
-
+    FADE                              = 586;
+    SHADOWFIEND                       = 34433;
 }
 HealbotAI::~HealbotAI() {}
+
+
+// finds spell ID for highest rank that the bot has learned, from highest rank of that spell
+uint32 HealbotAI::getLearnedSpellId(uint32 spellId_highest_rank) const
+{
+    if(m_bot->HasSpell(spellId_highest_rank)) // bot has highest rank of spell, use it
+        return spellId_highest_rank;
+
+    for(uint32 PrevSpellId = spellId_highest_rank; PrevSpellId != 0; PrevSpellId = spellmgr.GetPrevSpellInChain(PrevSpellId))
+    {
+        if(m_bot->HasSpell(PrevSpellId))
+            return PrevSpellId;
+    }
+    return 0;
+}
 
 // finds spell ID for matching substring args
 // in priority of full text match, spells not taking reagents, and highest rank
@@ -1304,14 +1302,14 @@ void HealbotAI::DoNextCombatManeuver()
 				        break;
         				
 			        }
-			          else	if (CLEARCASTING > 0 && LastSpellHoly <2 && GetManaPercent() >= 60) {
+			          /*else	if (CLEARCASTING > 0 && LastSpellHoly <2 && GetManaPercent() >= 60) {
 						        TellMaster("I'm casting clearcasting");
 						        CastSpell(CLEARCASTING, *pTarget);
         						
 						        SpellSequence = SPELL_SHADOWMAGIC;
 						        (LastSpellHoly = LastSpellHoly +1);
 						        break;
-				          }
+				          }*/
         			
 				        else if (HOLY_NOVA > 0 && LastSpellHoly <3 && GetManaPercent() >= 60) {
 						        TellMaster("I'm casting holy nova");
@@ -1394,12 +1392,12 @@ void HealbotAI::DoNextCombatManeuver()
 						        (LastSpellShadowMagic = LastSpellShadowMagic +1);
 						        break;
 				          }
-				        else if (PRAYER_OF_SHADOW_PROTECTION > 0 && LastSpellShadowMagic <8 && GetManaPercent() >= 60) {
+				        /*else if (PRAYER_OF_SHADOW_PROTECTION > 0 && LastSpellShadowMagic <8 && GetManaPercent() >= 60) {
 						        CastSpell(PRAYER_OF_SHADOW_PROTECTION, *pTarget);
 						        SpellSequence = SPELL_DISCIPLINE;
 						        (LastSpellShadowMagic = LastSpellShadowMagic +1);
 						        break;
-				          }
+				          }*/
 				        else if (SHADOWFIEND > 0 && LastSpellShadowMagic <9 && GetManaPercent() >= 60) {
 						        CastSpell(SHADOWFIEND, *pTarget);
 						        SpellSequence = SPELL_DISCIPLINE;
@@ -1476,9 +1474,6 @@ void HealbotAI::DoNonCombatActions()
 	}
 	if (INNER_FIRE > 0) {
 		(!m_bot->HasAura(INNER_FIRE, 0) && CastSpell (INNER_FIRE, *m_bot));
-	}
-	if (TOUCH_OF_WEAKNESS > 0) {
-		(m_bot->getRace()==5 /* undead */ && CastSpell (TOUCH_OF_WEAKNESS, *m_bot));
 	}
 
 	// buff master
@@ -1584,9 +1579,9 @@ void HealbotAI::UpdateAI(const uint32 p_time)
 
     else if(!m_bot->getAttackers().empty())
     {
-        if(GetHealthPercent() <= 60 && CanUseSpell(FADE) && /*!m_bot->HasAura(FADE, 0) &&*/ !m_bot->HasSpellCooldown(FADE)) // use fade below 60% hp
+        if(GetHealthPercent() <= 60 && CanUseSpell(FADE) && !m_bot->HasAura(FADE, 0) && !m_bot->HasSpellCooldown(FADE)) // use fade below 60% hp
         {
-            if(CastSpell(FADE))
+            if(CastSpell(FADE, 1))
                 TellMaster("I'm using Fade");
         }
         else
