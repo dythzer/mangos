@@ -57,6 +57,8 @@ m_IsFollowingMaster(true), m_spellIdCommand(0), m_targetGuidCommand(0)
 
     if(getLearnedSpellId(48063) > 0)
         HEAL = getLearnedSpellId(48063); // Greater Heal
+    else if(getLearnedSpellId(6064) > 0)
+        HEAL = getLearnedSpellId(6064);  // Heal
     else
         HEAL = getLearnedSpellId(2053);  // Lesser Heal
 
@@ -1486,7 +1488,7 @@ void HealbotAI::DoNonCombatActions()
     {
 		TellMaster("I need a mana break.");
 		UseItem(*pItem);
-		//SetIgnoreUpdateTime(30); TODO: Add check in UpdateAI(), return if is resting
+		SetIgnoreUpdateTime(30); //TODO: Add check in UpdateAI(), return if is resting
 		return;
 	}
 
@@ -2181,10 +2183,10 @@ void HealbotAI::HealTarget(Unit &target, uint8 hp)
 		if(CastSpell(CIRCLE_OF_HEALING, target, 1))
             TellMaster("I'm casting circle of healing.");
 	}*/
-    else if (hp < 60 && GetManaPercent() >= 36)
+    else if (hp < 60 && GetManaPercent() >= 20)
     {
 		if(CastSpell(HEAL, target, 3))
-            TellMaster("I'm casting Heal (greater or lesser)");
+            TellMaster("I'm casting Heal");
 	}
 	else if (hp < 85 /*&& GetManaPercent() >= 20*/)
     {
