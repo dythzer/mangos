@@ -1261,6 +1261,36 @@ Network.OutUBuff = 65536
 Network.TcpNodelay = 1
 
 ###################################################################################################################
+# PvP Token System (custom patch)
+#
+#    PvPToken.Enable
+#         Enable/disable PvP Token system.
+#         Default: 1 (enabled)
+#                  0 (disabled)
+#
+#    PvPToken.ItemID
+#         The item ID of the token that players will receive after killing an enemy.
+#         Default: 29434 (Badge of Justice)
+#
+#    PvPToken.ItemCount
+#         The count amount of the ItemID
+#         Default: 1
+#
+#    PvPToken.MapRestriction
+#         The type of maps where players can receive the token
+#         Default: 4 - all maps
+#                  3 - battlegrounds only
+#                  2 - FFA areas only (both instanced and world arenas)
+#                  1 - battlegrounds and FFA areas only
+#
+###################################################################################################################
+
+PvPToken.Enable = 1
+PvPToken.ItemID = 29434
+PvPToken.ItemCount = 1
+PvPToken.MapRestriction = 4
+
+###################################################################################################################
 # CONSOLE AND REMOTE ACCESS
 #
 #    Console.Enable
