@@ -50,8 +50,8 @@ uint64 extractGuid(WorldPacket& packet)
 	return guid;
 }
 
-HealbotAI::HealbotAI(Player* const master, Player* const bot) : m_master(master), m_bot(bot), m_ignoreAIUpdatesUntilTime(0),
-m_combatOrder(ORDERS_NONE), m_ScenarioType(SCENARIO_PVEEASY), m_TimeDoneEating(0), m_TimeDoneDrinking(0), m_CurrentlyCastingSpellId(0),
+HealbotAI::HealbotAI(Player* const master, Player* const bot) : m_master(master), m_bot(bot), m_ignoreAIUpdatesUntilTime(0)/*,
+m_combatOrder(ORDERS_NONE), m_ScenarioType(SCENARIO_PVEEASY)*/, m_TimeDoneEating(0), m_TimeDoneDrinking(0), m_CurrentlyCastingSpellId(0),
 m_IsFollowingMaster(true), m_spellIdCommand(0), m_targetGuidCommand(0)
 {
 
@@ -409,8 +409,8 @@ void HealbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
 	}
 	case SMSG_DUEL_COMPLETE: {
 		m_ignoreAIUpdatesUntilTime = time(0) + 4;
-		m_combatOrder = ORDERS_NONE;
-		m_ScenarioType = SCENARIO_PVEEASY;
+		//m_combatOrder = ORDERS_NONE;
+		//m_ScenarioType = SCENARIO_PVEEASY;
 		m_bot->GetMotionMaster()->Clear(true);
 		return;
 	}
@@ -441,8 +441,8 @@ void HealbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
 
 			m_bot->SetSelection(playerGuid);
 			m_ignoreAIUpdatesUntilTime = time(0) + 4;
-			m_combatOrder = ORDERS_KILL;
-			m_ScenarioType = SCENARIO_DUEL;
+			//m_combatOrder = ORDERS_KILL;
+			//m_ScenarioType = SCENARIO_DUEL;
 		}
 		return;
 	}
@@ -1170,120 +1170,53 @@ void HealbotAI::Rest()
 	}
 }
 
-// intelligently sets a reasonable combat order for this bot
-// based on its class / level / etc
-void HealbotAI::GetCombatOrders()
+void HealbotAI::DoCombatHealing()
 {
-	Unit* thingToAttack = m_master->getAttackerForHelper();
-	if (!thingToAttack)
-		return;
 
-	// if thing to attack is in a duel, then ignore and don't call updateAI for 6 seconds
-	// this method never gets called when the bot is in a duel and this code
-	// prevents bot from helping
-	if (thingToAttack->GetTypeId() == TYPEID_PLAYER
-			&& dynamic_cast<Player*> (thingToAttack)->duel) {
-		m_ignoreAIUpdatesUntilTime = time(0) + 6;
-		return;
-	}
+	Follow(*m_master);
 
-	m_bot->SetSelection(thingToAttack->GetGUID());
-	//m_ignoreAIUpdatesUntilTime = time(0) + 1;
-	m_combatOrder = ORDERS_KILL;
-
-	if (m_bot->getStandState() != PLAYER_STATE_NONE)
-		m_bot->SetStandState(PLAYER_STATE_NONE);
-
-	//m_bot->Attack(thingToAttack, true);
-
-	m_bot->GetMotionMaster()->Clear(true);
-
-	/* follow target in casting range - I commented out the priest & mage classes because of strange behavior - feel free to experiment
-	switch (m_bot->getClass()) {
-	case CLASS_PRIEST:
-		break;
-	case CLASS_MAGE: {
-		float angle = rand_float(0, M_PI);
-		float dist = rand_float(4, 8);
-		m_bot->GetMotionMaster()->Clear(true);
-		m_bot->GetMotionMaster()->MoveFollow(thingToAttack, dist, angle);
-		break;
-	}
-	case CLASS_SHAMAN:
-		break;
-	case CLASS_WARLOCK:
-		break;
-	case CLASS_DRUID: {
-		float angle = rand_float(0, M_PI);
-		float dist = rand_float(4, 8);
-		m_bot->GetMotionMaster()->Clear(true);
-		m_bot->GetMotionMaster()->MoveFollow(thingToAttack, dist, angle);
-		break;
-	}
-	default:
-		m_bot->GetMotionMaster()->MoveChase(thingToAttack);
-	}*/
-
-	return;
-}
-
-void HealbotAI::DoNextCombatManeuver()
-{
-	Unit* const pTarget = ObjectAccessor::GetUnit(*m_bot, m_bot->GetSelection());
-
-	// if current order doesn't make sense anymore
-	// clear our orders so we can get orders in next update
-	if (!pTarget || pTarget->isDead() || !pTarget->IsInWorld() || !m_bot->IsHostileTo(pTarget))
-    {
-		m_combatOrder = ORDERS_NONE;
-		m_bot->SetSelection(0);
-		m_bot->GetMotionMaster()->Clear(true);
-		return;
-	}
-
-	/*switch (GetScenarioType()) {
-		case SCENARIO_DUEL:
-			(HasAura(SCREAM,*pTarget) && GetHealthPercent() < 60 && CastSpell(HEAL)) ||
-			CastSpell(PAIN) ||
-			(GetHealthPercent() < 80 && CastSpell(RENEW)) ||
-			(GetHealbot()->GetDistance(pTarget) <= 5 && CastSpell(SCREAM)) ||
-			CastSpell(MIND_BLAST) ||
-			(GetHealthPercent() < 20 && CastSpell(FLASH_HEAL)) ||
-			CastSpell(SMITE);
-			return;
-	}*/
-
-
-	// ------- Non Duel combat ----------
-
-	Follow(*m_master); // dont want to melee mob
-
-	// Priority 1: Heal master
-
+	////// Priority 1: Heal master //////
     uint32 masterHP = m_master->GetHealth()*100 / m_master->GetMaxHealth();
 
     if (m_master->isAlive() && masterHP <= 35 && CanUseSpell(PWS) && !m_master->HasAura(PWS, 0)) // cast power word: shield before heal, if needed
         CastSpell(PWS, *(m_master), 1);
+
     else if(m_master->isAlive() && masterHP <= 90)
         HealTarget(*m_master, masterHP);
-    // Priority 2: Heal self
-    else if(GetHealthPercent() < 30 && CanUseSpell(PWS) && !GetHealbot()->HasAura(PWS, 0))
+
+
+    ////// Priority 2: Heal self //////
+    else if(GetHealthPercent() < 30 && !GetHealbot()->HasAura(PWS, 0))
     {
         TellMaster("I'm casting Power Word: Shield on myself.");
-		CastSpell(PWS, 1);
+		CastSpell(PWS);
     }
     else if(GetHealthPercent() < 85)
         HealTarget(*GetHealbot(), GetHealthPercent());
-    else // Priority 3: Damage Spells (if enabled)
+
+
+    else ////// Priority 3: Damage Spells (if enabled) //////
     {
         uint8 UseDamageSpells = sWorld.getConfig(CONFIG_HEALBOT_ALLOW_DAMAGE);
 
         if(UseDamageSpells == 0)
             return;
 
-	    Player *m_bot = GetHealbot();
-	    if( !m_bot->HasInArc(M_PI, pTarget))
+        Unit* pTarget = m_master->getAttackerForHelper();
+	    if(!pTarget)
+		    return;
+
+        m_bot->SetSelection(pTarget->GetGUID());
+
+	    //Player *m_bot = GetHealbot();
+	    if(!m_bot->HasInArc(M_PI, pTarget))
 	        m_bot->SetInFront(pTarget);
+
+        float angle = rand_float(0, M_PI);
+        float dist = rand_float(4, 10);
+        m_bot->GetMotionMaster()->Clear(true);
+        m_bot->GetMotionMaster()->MoveFollow(m_master, dist, angle);
+
 
         if(UseDamageSpells == 2) // Wand only
         {
@@ -1451,14 +1384,14 @@ void HealbotAI::DoNextCombatManeuver()
     }
 }
 
-} // end DoNextCombatManeuver
+}
 
 void HealbotAI::DoNonCombatActions()
 {
 	if(!m_bot)
 		return;
 
-	//SpellSequence = SPELL_HOLY;
+    m_bot->InterruptSpell(CURRENT_AUTOREPEAT_SPELL);
 
     // buff master
 	if(!m_master->HasAura(FORTITUDE, 0))
@@ -1534,7 +1467,7 @@ void HealbotAI::DoNonCombatActions()
 		    }
 	    }
 	}
-} // end DoNonCombatActions
+}
 
 // some possible things to use in AI
 //GetRandomContactPoint
@@ -1574,6 +1507,11 @@ void HealbotAI::UpdateAI(const uint32 p_time)
 		m_targetGuidCommand = 0;
 	}
 
+    /*
+    if (m_bot->getStandState() != PLAYER_STATE_NONE)
+		    m_bot->SetStandState(PLAYER_STATE_NONE);
+            */
+
     /////////// HANDLE COMBAT ///////////
 
     if(m_bot->isInCombat() || m_master->isInCombat())
@@ -1589,13 +1527,7 @@ void HealbotAI::UpdateAI(const uint32 p_time)
                 TellMaster("Help! I'm under attack.");
         }
 
-        if (m_combatOrder != ORDERS_NONE)
-            DoNextCombatManeuver();
-
-        // if master is in combat and bot is not, automatically assist master
-        // NOTE: combat orders are also set via incoming packets to bot or outgoing packets from master
-        else if(m_master->isInCombat())
-            GetCombatOrders();
+        DoCombatHealing(); // Damage spells or wand is called from this too, if enabled
     }
     else
     /////////// HANDLE NON-COMBAT ///////////
@@ -2036,7 +1968,7 @@ void HealbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
     else if(text == "rest" || text == "drink" || text == "eat")
         Rest();
 
-	else if (text == "attack")
+	/*else if (text == "attack")
     {
 		uint64 attackOnGuid = fromPlayer.GetSelection();
 		if (attackOnGuid)
@@ -2058,7 +1990,7 @@ void HealbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
 			TellMaster("No target is selected.");
 			m_bot->HandleEmoteCommand(EMOTE_ONESHOT_TALK);
 		}
-	}
+	}*/
 
 	// handle cast command
 	else if (text.size() > 2 && text.substr(0, 2) == "c " || text.size() > 5
@@ -2163,7 +2095,7 @@ void HealbotAI::HandleCommand(const std::string& text, Player& fromPlayer)
 
 void HealbotAI::HealTarget(Unit &target, uint8 hp)
 {
-	if (hp < 35 && CanUseSpell(FLASH_HEAL) /*&& GetManaPercent() >= 20*/)
+	if (hp < 35 /*&& GetManaPercent() >= 20*/)
     {
 		if(CastSpell(FLASH_HEAL, target, 1.5))
             TellMaster("I'm casting flash heal.");
@@ -2183,7 +2115,7 @@ void HealbotAI::HealTarget(Unit &target, uint8 hp)
 		if(CastSpell(CIRCLE_OF_HEALING, target, 1))
             TellMaster("I'm casting circle of healing.");
 	}*/
-    else if (hp < 60 && GetManaPercent() >= 20)
+    else if (hp <= 60 && GetManaPercent() >= 20)
     {
 		if(CastSpell(HEAL, target, 3))
             TellMaster("I'm casting Heal");

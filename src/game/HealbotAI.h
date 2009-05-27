@@ -10,13 +10,13 @@ class Object;
 class Item;
 class HealbotClassAI;
 
-enum ScenarioType {
+/*enum ScenarioType {
 	SCENARIO_PVEEASY,
 	SCENARIO_PVEHARD,
 	SCENARIO_DUEL,
 	SCENARIO_PVPEASY,
 	SCENARIO_PVPHARD
-};
+};*/
 
 enum {
 	SPELL_HOLY,
@@ -63,7 +63,7 @@ class MANGOS_DLL_SPEC HealbotAI {
         static void HandleMasterOutgoingPacket(const WorldPacket& packet, WorldSession& masterSession);
 
 		// Returns what kind of situation we are in so the ai can react accordingly
-		ScenarioType GetScenarioType() {return m_ScenarioType;}
+		//ScenarioType GetScenarioType() {return m_ScenarioType;}
 
 		//HealbotClassAI* GetClassAI() {return m_classAI;}
 
@@ -130,8 +130,8 @@ class MANGOS_DLL_SPEC HealbotAI {
         void SendNotEquipList(Player& player);
         void Rest();
         void InterruptCurrentCastingSpell();
-        void GetCombatOrders();
-        void DoNextCombatManeuver(); //void DoNextCombatManeuver(Unit*);
+        //void GetCombatOrders();
+        void DoCombatHealing(); //void DoNextCombatManeuver(Unit*);
 		void SetIgnoreUpdateTime(uint8 t) {m_ignoreAIUpdatesUntilTime=time(0) + t; };
 
 		Player *GetHealbot() {return m_bot;}
@@ -149,7 +149,6 @@ class MANGOS_DLL_SPEC HealbotAI {
         // owns the "this" object and m_master owns m_bot. The owner always cleans up.
 	Player* const m_master;
 	Player* const m_bot;
-		//HealbotClassAI* m_classAI;
 
 	// ignores AI updates until time specified
 	// no need to waste CPU cycles during casting etc
@@ -174,7 +173,7 @@ class MANGOS_DLL_SPEC HealbotAI {
 
 	// masters orders that should be obeyed by the AI during the updteAI routine
 	// the master will auto set the target of the bot
-	enum CombatOrderType {
+	/*enum CombatOrderType {
 		ORDERS_NONE,
 		ORDERS_KILL,
 		ORDERS_CC,
@@ -185,7 +184,7 @@ class MANGOS_DLL_SPEC HealbotAI {
 	};
 	CombatOrderType m_combatOrder;
 
-		ScenarioType m_ScenarioType;
+		ScenarioType m_ScenarioType;*/
 
 	time_t m_TimeDoneEating;
 	time_t m_TimeDoneDrinking;
